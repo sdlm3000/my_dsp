@@ -59,6 +59,7 @@ void  main()
     {
         LED8_TOGGLE;
         DELAY_US(1000 * 100);
+        uart_printf("hello\r\n");
 
     }
 

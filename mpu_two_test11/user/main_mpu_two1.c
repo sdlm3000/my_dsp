@@ -61,6 +61,7 @@ void  main()
 
     while(1)
     {
+
         if (imu901_uart_receive(&ch, 1))    /*!< 获取串口fifo一个字节 */
         {
             if (imu901_unpack(ch))          /*!< 解析出有效数据包 */
