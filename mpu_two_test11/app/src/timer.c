@@ -95,7 +95,6 @@ void TIM1_Init(float Freq, float Period)
 
 interrupt void TIM0_IRQn(void)
 {
-    uart_printf("hello\r\n");
     mpu6050_send_data((int)(rolla * 100), (int)(pitcha * 100), (int)(yawa * 100),
                       (int)(attitude.roll * 100), (int)(attitude.pitch * 100), (int)(attitude.yaw * 100));//用自定义帧发送加速度和陀螺仪原始数据
     EALLOW;

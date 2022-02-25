@@ -13,11 +13,11 @@
 
 #define BUF_SIZE   5  // Sample buffer size
 
-#define maxspeed  1999//MOSFET驱动的第二版电路时1999  光耦版本是0
-#define minspeed 0
-#define gain1 12.3
-#define gain2 12.9
-#define gain3 12.8
+#define MAX_SPEED  1999//MOSFET驱动的第二版电路时1999  光耦版本是0
+#define MIN_SPEED 0
+#define GAIN1 12.3
+#define GAIN2 12.9
+#define GAIN3 12.8
 
 #define PI        3.1415926
 
@@ -151,6 +151,11 @@
 #define max_valve4 300
 #define max_valve3 1600
 #define min_valve2 1999
+
+extern int valve_pwm_middle_zhi;
+extern int valve_pwm_middle_bei;
+extern int valve_pwm_push;
+extern int state_motor;
 
 
 void valveinit(void);

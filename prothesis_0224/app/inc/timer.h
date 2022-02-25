@@ -13,6 +13,11 @@
 #include "DSP2833x_Examples.h"  //  DSP2833x  Examples  Include  File
 #include "common.h"
 
+extern double press1,press2,press3;
+extern double arg;
+//extern Uint16 press_plante1;
+//extern Uint16 press_plante2;
+//extern Uint16 press_plante3;
 
 void TIM0_Init(float Freq, float Period);
 interrupt void TIM0_IRQn(void);

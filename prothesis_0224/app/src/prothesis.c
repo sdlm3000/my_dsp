@@ -10,10 +10,13 @@
 #include "pwm.h"
 #include "common.h"
 
-extern int valve_pwm_middle_zhi;
-extern int valve_pwm_middle_bei;
-extern int valve_pwm_push;
-extern int state_motor;
+
+int state_motor = 0;        //用于表示电机的运行状态，0 -> 运行,1 -> 停止
+
+int valve_pwm_middle_zhi = 0;   //被动状态下，用于控制阀的PWM值
+int valve_pwm_middle_bei = 0;   //被动状态下，用于控制阀的PWM值
+int valve_pwm_push = 0;     //蹬腿状态下，用于控制阀的PWM值
+
 /***********************电磁阀相关函数********************/
 //电磁阀部分的初始化
 void valveinit(void)
@@ -52,19 +55,19 @@ void valveinit(void)
 //蹬腿
 void PUSH(void)
 {
-    EPwm2Regs.CMPA.half.CMPA = minspeed;
-    EPwm3Regs.CMPA.half.CMPA = maxspeed;
-    EPwm4Regs.CMPA.half.CMPA = maxspeed;
-    EPwm5Regs.CMPA.half.CMPA = minspeed;
+    EPwm2Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm3Regs.CMPA.half.CMPA = MAX_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = MAX_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
 }
 
 //被动态
 void MIDDLE(void)
 {
-    EPwm2Regs.CMPA.half.CMPA = minspeed;
-    EPwm3Regs.CMPA.half.CMPA = minspeed;
-    EPwm4Regs.CMPA.half.CMPA = minspeed;
-    EPwm5Regs.CMPA.half.CMPA = minspeed;
+    EPwm2Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
 }
 
 // 1和4互换，注意上面没有改变
@@ -72,10 +75,10 @@ void MIDDLE(void)
 //泄压
 void UNLOAD(void)
 {
-    EPwm2Regs.CMPA.half.CMPA = minspeed;
-    EPwm3Regs.CMPA.half.CMPA = maxspeed;
-    EPwm4Regs.CMPA.half.CMPA = minspeed;
-    EPwm5Regs.CMPA.half.CMPA = maxspeed;
+    EPwm2Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm3Regs.CMPA.half.CMPA = MAX_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MAX_SPEED;
 }
 
 //被动跖屈
@@ -83,13 +86,13 @@ void MIDDLE_bei(void)
 {
 //    if(switch_flag == 1)
 //    {
-//        valve_pwm_middle=minspeed;
+//        valve_pwm_middle=MIN_SPEED;
 //        switch_flag=0;
 //    }
     EPwm2Regs.CMPA.half.CMPA = valve_pwm_middle_zhi;
-    EPwm3Regs.CMPA.half.CMPA = minspeed;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
     EPwm4Regs.CMPA.half.CMPA = valve_pwm_middle_bei;
-    EPwm5Regs.CMPA.half.CMPA = minspeed;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
 }
 
 //被动背屈
@@ -97,35 +100,33 @@ void MIDDLE_zhi(void)
 {
 //    if(switch_flag == 1)
 //    {
-//        valve_pwm_middle=minspeed;
+//        valve_pwm_middle=MIN_SPEED;
 //        switch_flag=0;
 //    }
     EPwm2Regs.CMPA.half.CMPA = valve_pwm_middle_zhi;
-    EPwm3Regs.CMPA.half.CMPA = minspeed;
-    EPwm4Regs.CMPA.half.CMPA = minspeed;
-    EPwm5Regs.CMPA.half.CMPA = minspeed;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
 }
 
 //蹬腿
 void PUSH_control(void)
 {
-    EPwm2Regs.CMPA.half.CMPA = minspeed;
+    EPwm2Regs.CMPA.half.CMPA = MIN_SPEED;
     EPwm3Regs.CMPA.half.CMPA = valve_pwm_push;
-    EPwm4Regs.CMPA.half.CMPA = maxspeed;
-    EPwm5Regs.CMPA.half.CMPA = minspeed;
+    EPwm4Regs.CMPA.half.CMPA = MAX_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
 }
 
 
 //收腿
 void PULL(void)
 {
-    EPwm2Regs.CMPA.half.CMPA = maxspeed;
-    EPwm3Regs.CMPA.half.CMPA = minspeed;
-    EPwm4Regs.CMPA.half.CMPA = minspeed;
-    EPwm5Regs.CMPA.half.CMPA = maxspeed;
+    EPwm2Regs.CMPA.half.CMPA = MAX_SPEED;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MAX_SPEED;
 }
-
-
 
 
 /********************电机相关函数****************/

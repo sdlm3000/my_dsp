@@ -15,34 +15,9 @@
 #include "leds.h"
 #include "bluetooth.h"
 
-double volt1=0, volt2=0, volt3=0, volt4=0, volt5=0, volt6=0, volt7=0;
-Uint32 sum1=0, sum2=0,sum3=0, sum4=0, sum5=0, sum6=0, sum7=0;
-Uint16 SampleTable1[BUF_SIZE];
-Uint16 SampleTable2[BUF_SIZE];
-Uint16 SampleTable3[BUF_SIZE];
-Uint16 SampleTable4[BUF_SIZE];
-Uint16 SampleTable5[BUF_SIZE];
-Uint16 SampleTable6[BUF_SIZE];
-Uint16 SampleTable7[BUF_SIZE];
 
-int i = 0;
-
-double arg_ave[5] = {0.0};
-
-double press1 = 0, press2 = 0, press3 = 0;
-double arg = 0.0;
-
-Uint16 press_plante1 = 0;
-Uint16 press_plante2 = 0;
-Uint16 press_plante3 = 0;
-
-int state_motor = 0;        //用于表示电机的运行状态，0 -> 运行,1 -> 停止
-
-int valve_pwm_middle_zhi = 0;   //被动状态下，用于控制阀的PWM值
-int valve_pwm_middle_bei = 0;   //被动状态下，用于控制阀的PWM值
-int valve_pwm_push = 0;     //蹬腿状态下，用于控制阀的PWM值
-
-int counter_P = 0;          // 用于记录压力故障事件的次数，防止误触发
+//int counter_P = 0;          // 用于记录压力故障事件的次数，防止误触发
+extern int state;
 
 int main(void)
 {
@@ -71,7 +46,7 @@ int main(void)
     ADC_Init();
     TIM0_Init(150, 5000);
 
-    EPwm1Regs.CMPA.half.CMPA = minspeed;
+    EPwm1Regs.CMPA.half.CMPA = MIN_SPEED;
 
     EINT;          // Enable Global interrupt INTM
     ERTM;          // Enable Global realtime interrupt DBGM
@@ -90,8 +65,11 @@ int main(void)
                 btParsing(&rx_Packet);
             }
         }
-//        delay_ms(1000);
-//        uart_printf("hello\r\n");
-//        LED8_TOGGLE;
+        if(state == 3 && arg < 0)
+        {
+            motor_stop();
+
+            MIDDLE();
+        }
     }
 }

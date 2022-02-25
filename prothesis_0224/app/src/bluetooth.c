@@ -6,10 +6,15 @@
  */
 
 #include "bluetooth.h"
-
+#include "prothesis.h"
 
 /* 串口接收解析成功的数据包 */
 bt_t rx_Packet;
+int state = 0;
+int pwm1 = 0, pwm2 = 0;
+
+extern double press1, press2, press3;
+extern double arg;
 
 /**
   * @brief  接收串口数据解包流程
@@ -79,6 +84,8 @@ Uint8 bt_unpack(Uint8 ch)
 
         case waitForChksum1:
             cksum = cksum & 0x00ff;
+            // 取消检验和，默认最后的值为0xff
+            cksum = 0x00ff;
             if (cksum == ch)    /*!< 校准正确返回1 */
             {
                 rx_Packet.checkSum = cksum;
@@ -107,14 +114,43 @@ Uint8 bt_unpack(Uint8 ch)
   */
 void btParsing(bt_t *packet)
 {
-    /* 姿态角 */
+    /* 假肢状态的设置 */
     if (packet->msgID == STATE_SET)
     {
-        uart_printf("state_set\r\n");
+        state = packet->data[0];
+        uart_printf("state_set: ");
+        if(state == 1)      // 卸荷
+        {
+            uart_printf("%d\r\n", state);
+            motor_stop();
+            UNLOAD();
+            delay_ms(500);
+            MIDDLE();
+        }
+        else if(state == 2) // 被动态实验状态
+        {
+            uart_printf("%d\r\n", state);
+            MIDDLE_bei();
+        }
+        else if(state == 3) // 假肢状态回复
+        {
+            uart_printf("%d\r\n", state);
+            if(press1 < P_max && press2 < P_max && press3 < P_max &&
+               press1 > P_min && press2 > P_min && press3 > P_min &&
+               arg > 0)
+            {
+                PULL();
+                motor_run();
+            }
+        }
     }
+    /* 假肢阀的pwm设置 */
     else if (packet->msgID == PWM_SET)
     {
-        uart_printf("pwm_state\r\n");
+        pwm1 = packet->data[0] / 16 * 10 + packet->data[0] % 16;
+        pwm2 = packet->data[1] / 16 * 10 + packet->data[1] % 16;
+        valve_pwm_middle_zhi = pwm1 * 0.01 * MAX_SPEED;
+        valve_pwm_middle_bei = pwm2 * 0.01 * MAX_SPEED;
     }
 }
 

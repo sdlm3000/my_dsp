@@ -20,23 +20,25 @@ float pitcha, rolla, yawa;
 int num1 = 0;
 int num2 = 0;
 
+static double volt1 = 0, volt2 = 0, volt3 = 0, volt4 = 0, volt5 = 0, volt6 = 0, volt7 = 0;
+static Uint32 sum1 = 0, sum2 = 0,sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 = 0;
+static Uint16 SampleTable1[BUF_SIZE];
+static Uint16 SampleTable2[BUF_SIZE];
+static Uint16 SampleTable3[BUF_SIZE];
+static Uint16 SampleTable4[BUF_SIZE];
+static Uint16 SampleTable5[BUF_SIZE];
+static Uint16 SampleTable6[BUF_SIZE];
+static Uint16 SampleTable7[BUF_SIZE];
 
-extern double press1,press2,press3;
-extern float arg;
-extern double arg_ave[5];
-extern Uint16 press_plante1;
-extern Uint16 press_plante2;
-extern Uint16 press_plante3;
+static double arg_ave[5] = {0.0};
 
-extern double volt1,volt2,volt3,volt4,volt5,volt6,volt7;
-extern Uint32 sum1,sum2,sum3,sum4,sum5,sum6,sum7;
-extern Uint16 SampleTable1[BUF_SIZE];
-extern Uint16 SampleTable2[BUF_SIZE];
-extern Uint16 SampleTable3[BUF_SIZE];
-extern Uint16 SampleTable4[BUF_SIZE];
-extern Uint16 SampleTable5[BUF_SIZE];
-extern Uint16 SampleTable6[BUF_SIZE];
-extern Uint16 SampleTable7[BUF_SIZE];
+double press1 = 0, press2 = 0, press3 = 0;
+double arg = 0.0;
+
+int counter_P = 0;
+
+extern int pwm1, pwm2;
+
 
 //定时器0初始化函数
 //Freq：CPU时钟频率（150MHz）
@@ -136,31 +138,20 @@ interrupt void TIM0_IRQn(void)
         sum6 = sum6 + SampleTable6[i];
         sum7 = sum7 + SampleTable7[i];
     }
-    press1 = ((((double)sum1) * 3 / 4096 / AVG) * gain1 - 4) * 1.25;
-//    scia_float(press1);
-    press2 = ((((double)sum2) * 3 / 4096 / AVG) * gain2 - 4) * 1.25;
-//    scia_xmit(' ');
-//    scia_float(press2);
-    press3 = ((((double)sum3) * 3 / 4096 / AVG) * gain3 - 4) * 1.25;
-//    scia_xmit(' ');
-//    scia_float(press3);
-    if(CpuTimer0.InterruptCount % 200 == 0)
-    {
-        uart_printf("press: %.2f %.2f %.2f\r\n", press1, press2, press3);
-    }
+    press1 = ((((double)sum1) * 3 / 4096 / AVG) * GAIN1 - 4) * 1.25;
+    press2 = ((((double)sum2) * 3 / 4096 / AVG) * GAIN2 - 4) * 1.25;
+    press3 = ((((double)sum3) * 3 / 4096 / AVG) * GAIN3 - 4) * 1.25;
 
-//    if(press1 >= P_max || press1 <= 0)
-//    {
-//        counter_P++;
-//        if(counter_P >= 15)
-//        {
-//            motor_stop();
-//            flag_run = 0;
-//            UNLOAD();
-//            counter_P = 0;
-//            state = 0;
-//        }
-//    }
+    if(press1 >= P_max || press1 <= 0)
+    {
+        counter_P++;
+        if(counter_P >= 15)
+        {
+            motor_stop();
+            UNLOAD();
+            counter_P = 0;
+        }
+    }
     arg = ((((double)sum4) * 3 / 4096 / AVG) * 100);//采样的实际电压 0-3v
     arg = 66.5 - arg;     // 70为零位的角度传感器值
     temp2 = 0;
@@ -170,10 +161,11 @@ interrupt void TIM0_IRQn(void)
         temp2 = temp2 + arg_ave[i];
     }
     arg_ave[4] = arg;
-    arg = (temp2 + arg_ave[4]) / 5; // 10点滑动平均
-//    scia_xmit(' ');
-//    scia_float(arg);
-
+    arg = (temp2 + arg_ave[4]) / 5; // 5点滑动平均
+    if(CpuTimer0.InterruptCount % 2 == 0)
+    {
+        uart_printf("%d %d %.2f %.2f %.2f %.2f\r\n", pwm1, pwm2, arg, press1, press2, press3);
+    }
     volt5 = ((double)sum5) * 3 / 4096 / AVG; //采样的实际电压 0-3v
     volt6 = ((double)sum6) * 3 / 4096 / AVG; //采样的实际电压 0-3v
     volt7 = ((double)sum7) * 3 / 4096 / AVG; //采样的实际电压 0-3v
