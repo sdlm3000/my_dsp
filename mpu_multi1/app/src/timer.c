@@ -13,6 +13,8 @@
 #include "inv_mpu_dmp_motion_driver.h"
 short gyrox, gyroy, gyroz;    //陀螺仪原始数据
 float pitch, roll, yaw;
+
+int counter = 0;
 //定时器0初始化函数
 //Freq：CPU时钟频率（150MHz）
 //Period：定时周期值，单位us
@@ -134,17 +136,38 @@ interrupt void TIM0_IRQn(void)
 {
     EALLOW;
     PieCtrlRegs.PIEACK.bit.ACK1=1;
-    LED9_TOGGLE;
+    counter++;
+    if(counter == 1){
+        LED14_OFF;
+        LED13_ON;
+        LED12_ON;
+        uart_printf("data1: ");
+
+    }
+    else if(counter == 2){
+        LED14_ON;
+        LED13_OFF;
+        LED12_ON;
+        uart_printf("data2: ");
+    }
+    else if(counter == 3){
+        LED14_ON;
+        LED13_ON;
+        LED12_OFF;
+        uart_printf("data3: ");
+        counter = 0;
+    }
+
+//    LED9_TOGGLE;
     if(mpu_dmp_get_data(&pitch,&roll,&yaw)==0)
     {
 //            MPU_Get_Accelerometer(&aacx,&aacy,&aacz);   //得到加速度传感器数据
         MPU_Get_Gyroscope(&gyrox,&gyroy,&gyroz);    //得到陀螺仪数据
-//        uart_printf("data:fdfsafds\r\n");
-        uart_printf("data: %.2f, %.2f, %.2f, %d, %d, %d\r\n", roll, pitch, yaw, gyrox, gyroy, gyroz);
+        uart_printf("%.2f, %.2f, %.2f, %d, %d, %d", roll, pitch, yaw, gyrox, gyroy, gyroz);
 //        mpu6050_send_data((int)(roll*100),(int)(pitch*100),(int)(yaw*10), gyrox,gyroy,gyroz);//用自定义帧发送加速度和陀螺仪原始数据
 //            if(report)usart1_report_imu(aacx,aacy,aacz,gyrox,gyroy,gyroz,(int)(roll*100),(int)(pitch*100),(int)(yaw*10));
     }
-
+    uart_printf("\r\n");
 
     EDIS;
 }
@@ -186,7 +209,7 @@ void TIM1_Init(float Freq, float Period)
 interrupt void TIM1_IRQn(void)
 {
     EALLOW;
-    LED10_TOGGLE;
+    LED9_TOGGLE;
     EDIS;
 }
 
@@ -230,7 +253,7 @@ void TIM2_Init(float Freq, float Period)
 interrupt void TIM2_IRQn(void)
 {
     EALLOW;
-    LED10_TOGGLE;
+//    LED11_TOGGLE;
     EDIS;
 }
 
