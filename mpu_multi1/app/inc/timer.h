@@ -9,10 +9,11 @@
 #define _TIMER_H_
 
 
-#include "DSP2833x_Device.h"    // DSP2833x Headerfile Include File
-#include "DSP2833x_Examples.h"  //  DSP2833x  Examples  Include  File
+#include "common.h"
 
-typedef unsigned char Uint8;
+#define BUF_SIZE    10
+
+
 
 void TIM0_Init(float Freq, float Period);
 interrupt void TIM0_IRQn(void);

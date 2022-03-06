@@ -14,5 +14,11 @@
 void UARTa_Init(Uint32 baud);
 void uart_printf(char * fmt, ...);
 
+// ºÊ»›
+void scia_xmit(Uint16 a);
+void scia_msg(char *msg);
+void scia_int(int data_char);
+void scia_float(double data);
+
 #endif /* _UART_H_ */
 

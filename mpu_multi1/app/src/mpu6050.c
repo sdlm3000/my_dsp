@@ -10,11 +10,6 @@
 #include "mpu6050.h"
 #include "uart.h"
 
-void delay_ms(Uint16 nms)
-{
-    DELAY_US(nms * 1000);
-}
-
 Uint8 MPU_Init()
 {
     Uint8 res;

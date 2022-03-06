@@ -2984,14 +2984,17 @@ Uint8 mpu_dmp_init(void)
 //yaw:航向角   精度:0.1°   范围:-180.0°<---> +180.0°
 //返回值:0,正常
 //    其他,失败
-Uint8 mpu_dmp_get_data(float *pitch,float *roll,float *yaw)
+Uint8 mpu_dmp_get_data(float *pitch,float *roll,float *yaw, short *gyrox, short *gyroy, short *gyroz)
 {
 	float q0=1.0f,q1=0.0f,q2=0.0f,q3=0.0f;
 	unsigned long sensor_timestamp;
 	short gyro[3], accel[3], sensors;
 	unsigned char more;
 	long quat[4]; 
-	if(dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors,&more))return 1;	 
+	if(dmp_read_fifo(gyro, accel, quat, &sensor_timestamp, &sensors,&more))return 1;
+	*gyrox = gyro[0];
+	*gyroy = gyro[1];
+	*gyroz = gyro[2];
 	/* Gyro and accel data are written to the FIFO by the DMP in chip frame and hardware units.
 	 * This behavior is convenient because it keeps the gyro and accel outputs of dmp_read_fifo and mpu_read_fifo consistent.
 	**/

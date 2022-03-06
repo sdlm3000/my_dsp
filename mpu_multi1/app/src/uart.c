@@ -68,3 +68,84 @@ void uart_printf(char * fmt, ...) //自定义变参函数
     }
 }
 
+// 兼容
+//发送
+void scia_xmit(Uint16 a)
+{
+    while (SciaRegs.SCIFFTX.bit.TXFFST != 0) { }
+    SciaRegs.SCITXBUF=a;
+}
+
+//传输一个四位整数
+void scia_int(int data_char)
+{
+    unsigned char sci_table[4];
+    if(data_char<0)
+    {
+        data_char = -1 * data_char;
+        scia_xmit('-');
+    }
+    sci_table[0]=data_char/1000;      //获得千位的数字
+    sci_table[1]=data_char%1000/100;  //获得百位的数字
+    sci_table[2]=data_char%100/10;    //获得十位的数字
+    sci_table[3]=data_char%10;        //获得个位的数字
+    if(sci_table[0]!= 0)
+    {
+        sci_table[0]=sci_table[0]+0x30;
+        scia_xmit(sci_table[0]);
+    }
+    if(sci_table[1]!= 0 || sci_table[0]!= 0)
+    {
+        sci_table[1]=sci_table[1]+0x30;
+        scia_xmit(sci_table[1]);
+    }
+    if(sci_table[1]!= 0 || sci_table[0]!= 0 || sci_table[2]!= 0)
+    {
+        sci_table[2]=sci_table[2]+0x30;
+        scia_xmit(sci_table[2]);
+    }
+    sci_table[3]=sci_table[3]+0x30;
+    scia_xmit(sci_table[3]);
+}
+
+//传输浮点数
+void scia_float(double data)
+{
+    unsigned char sci_table[4];
+    long a;
+    a=data*100;                          //保留2位小数
+    if(a<0)
+    {
+        a = -1 * a;
+        scia_xmit('-');
+    }
+    sci_table[0]=a/1000;
+    sci_table[1]=a%1000/100;
+    sci_table[2]=a%100/10;
+    sci_table[3]=a%10;
+
+    if(sci_table[0]!= 0)
+    {
+        sci_table[0]=sci_table[0]+0x30;
+        scia_xmit(sci_table[0]);
+    }
+    sci_table[1]=sci_table[1]+0x30;
+    scia_xmit(sci_table[1]);
+    scia_xmit('.');
+    sci_table[2]=sci_table[2]+0x30;
+    scia_xmit(sci_table[2]);
+    sci_table[3]=sci_table[3]+0x30;
+    scia_xmit(sci_table[3]);
+}
+
+//发送字符串
+void scia_msg(char * msg)
+{
+    int i;
+    i = 0;
+    while(msg[i] != '\0')
+    {
+        scia_xmit(msg[i]);
+        i++;
+    }
+}

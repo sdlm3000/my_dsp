@@ -11,10 +11,26 @@
 #include "mpu6050.h"
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
-short gyrox, gyroy, gyroz;    //陀螺仪原始数据
-float pitch, roll, yaw;
+#include "multi_mpu.h"
 
+//short gyrox, gyroy, gyroz;    //陀螺仪原始数据
+//float pitch, roll, yaw;
+
+float pitch[5], roll[5], yaw[5];
+short gyrox[5], gyroy[5], gyroz[5];    //陀螺仪原始数据
+short mpu_flag = 0;
 int counter = 0;
+
+static Uint16 sum1 = 0, sum2 = 0,sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 = 0;
+static Uint16 SampleTable1[10];
+static Uint16 SampleTable2[BUF_SIZE];
+static Uint16 SampleTable3[BUF_SIZE];
+static Uint16 SampleTable4[BUF_SIZE];
+static Uint16 SampleTable5[BUF_SIZE];
+static Uint16 SampleTable6[BUF_SIZE];
+static Uint16 SampleTable7[BUF_SIZE];
+
+
 //定时器0初始化函数
 //Freq：CPU时钟频率（150MHz）
 //Period：定时周期值，单位us
@@ -134,43 +150,89 @@ void usart1_report_imu(short aacx,short aacy,short aacz,short gyrox,short gyroy,
 
 interrupt void TIM0_IRQn(void)
 {
+    int index;
+
     EALLOW;
     PieCtrlRegs.PIEACK.bit.ACK1=1;
     counter++;
     if(counter == 1){
-        LED14_OFF;
-        LED13_ON;
-        LED12_ON;
-        uart_printf("data1: ");
-
+//        mpu_select(1);
+        MPU5_OFF;
+        MPU1_ON;
+//        uart_printf("-data5\r\n");
+//        uart_printf("-\r\n");
     }
     else if(counter == 2){
-        LED14_ON;
-        LED13_OFF;
-        LED12_ON;
-        uart_printf("data2: ");
+//        mpu_select(2);
+        MPU2_ON;
+        MPU1_OFF;
+//        uart_printf("-\r\n");
     }
     else if(counter == 3){
-        LED14_ON;
-        LED13_ON;
-        LED12_OFF;
-        uart_printf("data3: ");
+//        mpu_select(3);
+        MPU2_OFF;
+        MPU3_ON;
+//        uart_printf("-\r\n");
+    }
+    else if(counter == 4){
+//        mpu_select(4);
+        MPU3_OFF;
+        MPU4_ON;
+//        uart_printf("-\r\n");
+    }
+    else if(counter == 5){
+//        mpu_select(5);
+        MPU4_OFF;
+        MPU5_ON;
+//        uart_printf("-\r\n");
         counter = 0;
+        mpu_flag = 0;
+    }
+    index = counter - 1;
+    if(counter <= 3 && counter > 0)
+    {
+        if(mpu_dmp_get_data(&pitch[index], &roll[index], &yaw[index], &gyrox[index], &gyroy[index], &gyroz[index])==0)
+        {
+//            uart_printf("%.2f", roll);
+//            uart_printf("0");
+            mpu_flag = mpu_flag & (0x1 << counter);
+        }
     }
 
-//    LED9_TOGGLE;
-    if(mpu_dmp_get_data(&pitch,&roll,&yaw)==0)
-    {
-//            MPU_Get_Accelerometer(&aacx,&aacy,&aacz);   //得到加速度传感器数据
-        MPU_Get_Gyroscope(&gyrox,&gyroy,&gyroz);    //得到陀螺仪数据
-        uart_printf("%.2f, %.2f, %.2f, %d, %d, %d", roll, pitch, yaw, gyrox, gyroy, gyroz);
-//        mpu6050_send_data((int)(roll*100),(int)(pitch*100),(int)(yaw*10), gyrox,gyroy,gyroz);//用自定义帧发送加速度和陀螺仪原始数据
-//            if(report)usart1_report_imu(aacx,aacy,aacz,gyrox,gyroy,gyroz,(int)(roll*100),(int)(pitch*100),(int)(yaw*10));
-    }
-    uart_printf("\r\n");
+
 
     EDIS;
 }
+
+//interrupt void TIM0_IRQn(void)
+//{
+//    EALLOW;
+//    PieCtrlRegs.PIEACK.bit.ACK1=1;
+//    counter++;
+//    LED9_TOGGLE;
+//    LED8_TOGGLE;
+//    LED9_TOGGLE;
+//    LED8_TOGGLE;
+//    LED9_TOGGLE;
+//    uart_printf("data: ");
+////    if(counter == 5)
+////    {
+////        if(mpu_dmp_get_data(&pitch, &roll, &yaw)==0)
+////        {
+////    //            MPU_Get_Accelerometer(&aacx,&aacy,&aacz);   //得到加速度传感器数据
+////    //        MPU_Get_Gyroscope(&gyrox,&gyroy,&gyroz);    //得到陀螺仪数据
+////    //        uart_printf("data:fdfsafds\r\n");
+////    //        uart_printf("data: %.2f, %.2f, %.2f, %d, %d, %d\r\n", roll, pitch, yaw, gyrox, gyroy, gyroz);
+////            uart_printf("%.2f, %.2f, %.2f", roll, pitch, yaw);
+////    //        mpu6050_send_data((int)(roll*100),(int)(pitch*100),(int)(yaw*10), gyrox,gyroy,gyroz);//用自定义帧发送加速度和陀螺仪原始数据
+////    //            if(report)usart1_report_imu(aacx,aacy,aacz,gyrox,gyroy,gyroz,(int)(roll*100),(int)(pitch*100),(int)(yaw*10));
+////        }
+////        counter = 0;
+////    }
+//
+//    uart_printf("\r\n");
+//    EDIS;
+//}
 
 void TIM1_Init(float Freq, float Period)
 {
@@ -208,8 +270,76 @@ void TIM1_Init(float Freq, float Period)
 
 interrupt void TIM1_IRQn(void)
 {
+    int i;
+    float test1;
     EALLOW;
     LED9_TOGGLE;
+//    uart_printf("%0.2f %0.2f %0.2f %d %d %d %0.2f %0.2f %0.2f %d %d %d %0.2f %0.2f %0.2f %d %d %d\r\n",
+//                roll[0], pitch[0],yaw[0], gyrox[0], gyroy[0], gyroz[0],
+//                roll[1], pitch[1],yaw[1], gyrox[1], gyroy[1], gyroz[1],
+//                roll[2], pitch[2],yaw[2], gyrox[2], gyroy[2], gyroz[2]);
+//    uart_printf("%0.2f %0.2f %0.2f %d %d %d\r\n", roll[0], pitch[0],yaw[0], gyrox[0], gyroy[0], gyroz[0]);
+
+    AdcRegs.ADCTRL2.all = 0x2000;   // 软件向SEQ1位写1开启转换触发
+    for (i = 0;i < 10;i++) // AVG=10
+    {
+        while (AdcRegs.ADCST.bit.INT_SEQ1 == 0) {}  // Wait for interrupt如何发起中断
+        AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;
+        SampleTable1[i] = (AdcRegs.ADCRESULT0 >> 4);
+        SampleTable2[i] = (AdcRegs.ADCRESULT1 >> 4);
+        SampleTable3[i] = (AdcRegs.ADCRESULT2 >> 4);
+        SampleTable4[i] = (AdcRegs.ADCRESULT3 >> 4);
+        SampleTable5[i] = (AdcRegs.ADCRESULT4 >> 4);
+        SampleTable6[i] = (AdcRegs.ADCRESULT5 >> 4);
+        SampleTable7[i] = (AdcRegs.ADCRESULT6 >> 4);
+        sum1 = sum1 + SampleTable1[i];
+        sum2 = sum2 + SampleTable2[i];
+        sum3 = sum3 + SampleTable3[i];
+        sum4 = sum4 + SampleTable4[i];
+        sum5 = sum5 + SampleTable5[i];
+        sum6 = sum6 + SampleTable6[i];
+        sum7 = sum7 + SampleTable7[i];
+    }
+    sum1 *= 0.1;
+    sum2 *= 0.1;
+    sum3 *= 0.1;
+    sum4 *= 0.1;
+    sum5 *= 0.1;
+    sum6 *= 0.1;
+    sum7 *= 0.1;
+    test1 = (counter + 1) * 0.1 * 0.5454 * 21.24 * 5.023 * 564.22 * 546.2 / 654.1 * 153.3 * 56.3 * 5.31 * 65.1 / 65.31 * 5.126 / 56.6 * 56.3 /2.1;
+    test1 = test1 * 65.3 / 3.21 / 5 * (counter + 1);
+    test1 = 30.32;
+//    uart_printf("%d %.2f\r\n", sum1, test1);
+    scia_float(roll[0]);
+    scia_msg(" ");
+    scia_float(roll[1]);
+    scia_msg(" ");
+    scia_float(roll[2]);
+    scia_msg(" ");
+    scia_float(test1);
+    scia_msg(" ");
+    scia_int(sum1);
+    scia_msg(" ");
+    scia_int(sum2);
+    scia_msg(" ");
+    scia_int(sum3);
+    scia_msg(" ");
+    scia_int(sum4);
+    scia_msg(" ");
+    scia_int(sum5);
+    scia_msg(" ");
+    scia_int(sum6);
+    scia_msg(" ");
+    scia_int(sum7);
+    scia_msg("\r\n");
+    sum1 = 0;
+    sum2 = 0;
+    sum3 = 0;
+    sum4 = 0;
+    sum5 = 0;
+    sum6 = 0;
+    sum7 = 0;
     EDIS;
 }
 
@@ -254,6 +384,7 @@ interrupt void TIM2_IRQn(void)
 {
     EALLOW;
 //    LED11_TOGGLE;
+
     EDIS;
 }
 

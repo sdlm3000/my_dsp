@@ -9,8 +9,7 @@
 #define _MPU6050_H_
 
 
-#include "DSP2833x_Device.h"    // DSP2833x Headerfile Include File
-#include "DSP2833x_Examples.h"  //  DSP2833x  Examples  Include  File
+#include "common.h"
 #include "i2c.h"
 
 #define MPU_SELF_TESTX_REG      0X0D    //×Ô¼ì¼Ä´æÆ÷X
@@ -104,7 +103,6 @@ short MPU_Get_Temperature(void);
 Uint8 MPU_Get_Gyroscope(short *gx, short *gy, short *gz);
 Uint8 MPU_Get_Accelerometer(short *ax, short *ay, short *az);
 
-void delay_ms(Uint16 nms);
 
 
 #endif /* _MPU6050_H_ */
