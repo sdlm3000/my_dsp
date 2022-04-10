@@ -15,6 +15,7 @@
 #include "imu901.h"
 #include "prothesis.h"
 
+double tmp1, tmp2, tmp3;
 short gyroxa, gyroya, gyroza;    //陀螺仪原始数据
 float pitcha, rolla, yawa;
 int num1 = 0;
@@ -36,6 +37,8 @@ double press1 = 0, press2 = 0, press3 = 0;
 double arg = 0.0;
 
 int counter_P = 0;
+
+
 
 extern int pwm1, pwm2;
 
@@ -117,6 +120,8 @@ interrupt void TIM0_IRQn(void)
 {
     int i;
     double temp,temp2;
+
+
     CpuTimer0.InterruptCount++;
     AdcRegs.ADCTRL2.all = 0x2000;   // 软件向SEQ1位写1开启转换触发
     for (i = 0;i < AVG;i++) // AVG=10
@@ -138,9 +143,12 @@ interrupt void TIM0_IRQn(void)
         sum6 = sum6 + SampleTable6[i];
         sum7 = sum7 + SampleTable7[i];
     }
-    press1 = ((((double)sum1) * 3 / 4096 / AVG) * GAIN1 - 4) * 1.25;
-    press2 = ((((double)sum2) * 3 / 4096 / AVG) * GAIN2 - 4) * 1.25;
-    press3 = ((((double)sum3) * 3 / 4096 / AVG) * GAIN3 - 4) * 1.25;
+    tmp1 = ((double)sum1) * 3 / 4096 / AVG;
+    tmp2 = ((double)sum2) * 3 / 4096 / AVG;
+    tmp3 = ((double)sum3) * 3 / 4096 / AVG;
+    press1 = (((double)sum1) * 3 / 4096 / AVG) * K_GAIN1 + B_GAIN;
+    press2 = (((double)sum2) * 3 / 4096 / AVG) * K_GAIN2 + B_GAIN;
+    press3 = (((double)sum3) * 3 / 4096 / AVG) * K_GAIN3 + B_GAIN;
 
     if(press1 >= P_max || press1 <= 0)
     {
@@ -148,12 +156,12 @@ interrupt void TIM0_IRQn(void)
         if(counter_P >= 15)
         {
             motor_stop();
-            UNLOAD();
+//            UNLOAD();
             counter_P = 0;
         }
     }
     arg = ((((double)sum4) * 3 / 4096 / AVG) * 100);//采样的实际电压 0-3v
-    arg = 66.5 - arg;     // 70为零位的角度传感器值
+    arg = 196.4 - arg;     // 70为零位的角度传感器值
     temp2 = 0;
     for(i = 0; i < 4; i++)
     {

@@ -15,6 +15,7 @@ int pwm1 = 0, pwm2 = 0;
 
 extern double press1, press2, press3;
 extern double arg;
+extern int rt_flag;
 
 /**
   * @brief  接收串口数据解包流程
@@ -115,13 +116,46 @@ Uint8 bt_unpack(Uint8 ch)
 void btParsing(bt_t *packet)
 {
     /* 假肢状态的设置 */
-    if (packet->msgID == STATE_SET)
+    if(packet->msgID == STATE_SET1)
+    {
+         state = packet->data[0];
+         uart_printf("state_set: %d\r\n", state);
+         if(state == 0)
+         {
+             motor_stop();
+             UNLOAD();
+         }
+         else if(state == 1)
+         {
+             UNLOAD();
+         }
+         else if(state == 2)
+         {
+             MIDDLE();
+         }
+         else if(state == 3)
+         {
+             PUSH();
+         }
+         else if(state == 4)
+         {
+             PULL();
+         }
+         else if(state == 5)
+         {
+             motor_run();
+         }
+         else if(state == 6)
+         {
+             motor_stop();
+         }
+    }
+    else if (packet->msgID == STATE_SET2)
     {
         state = packet->data[0];
-        uart_printf("state_set: ");
+        uart_printf("state_set: %d\r\n", state);
         if(state == 1)      // 卸荷
         {
-            uart_printf("%d\r\n", state);
             motor_stop();
             UNLOAD();
             delay_ms(500);
@@ -129,18 +163,37 @@ void btParsing(bt_t *packet)
         }
         else if(state == 2) // 被动态实验状态
         {
-            uart_printf("%d\r\n", state);
+            valve_pwm_middle_zhi = 0;
+            valve_pwm_middle_bei = 0;
             MIDDLE_bei();
         }
         else if(state == 3) // 假肢状态回复
         {
-            uart_printf("%d\r\n", state);
-            if(press1 < P_max && press2 < P_max && press3 < P_max &&
-               press1 > P_min && press2 > P_min && press3 > P_min &&
-               arg > 0)
+//            if(press1 < P_max && press2 < P_max && press3 < P_max &&
+//               press1 > P_min && press2 > P_min && press3 > P_min &&
+//               arg < 1)
+//            {
+//                PUSH();
+//                motor_run();
+//            }
+            UNLOAD();
+            delay_ms(100);
+            PUSH();
+            motor_run();
+        }
+        else if(state == 4) // 假肢往复运动
+        {
+            if(rt_flag == 0)
             {
-                PULL();
+                UNLOAD();
+                rt_flag = 1;
                 motor_run();
+            }
+            else if(rt_flag != 0)
+            {
+                rt_flag = 0;
+                motor_stop();
+                MIDDLE();
             }
         }
     }
@@ -151,6 +204,10 @@ void btParsing(bt_t *packet)
         pwm2 = packet->data[1] / 16 * 10 + packet->data[1] % 16;
         valve_pwm_middle_zhi = pwm1 * 0.01 * MAX_SPEED;
         valve_pwm_middle_bei = pwm2 * 0.01 * MAX_SPEED;
+        if(state == 2)
+        {
+            MIDDLE_bei();
+        }
     }
 }
 

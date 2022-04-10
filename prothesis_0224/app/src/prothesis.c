@@ -51,6 +51,14 @@ void valveinit(void)
     EDIS;
 }
 
+//收腿
+void PULL(void)
+{
+    EPwm2Regs.CMPA.half.CMPA = MAX_SPEED;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MAX_SPEED;
+}
 
 //蹬腿
 void PUSH(void)
@@ -60,16 +68,6 @@ void PUSH(void)
     EPwm4Regs.CMPA.half.CMPA = MAX_SPEED;
     EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
 }
-
-//被动态
-void MIDDLE(void)
-{
-    EPwm2Regs.CMPA.half.CMPA = MIN_SPEED;
-    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
-    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
-    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
-}
-
 // 1和4互换，注意上面没有改变
 
 //泄压
@@ -79,6 +77,15 @@ void UNLOAD(void)
     EPwm3Regs.CMPA.half.CMPA = MAX_SPEED;
     EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
     EPwm5Regs.CMPA.half.CMPA = MAX_SPEED;
+}
+
+//被动态
+void MIDDLE(void)
+{
+    EPwm2Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
 }
 
 //被动跖屈
@@ -116,16 +123,6 @@ void PUSH_control(void)
     EPwm3Regs.CMPA.half.CMPA = valve_pwm_push;
     EPwm4Regs.CMPA.half.CMPA = MAX_SPEED;
     EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
-}
-
-
-//收腿
-void PULL(void)
-{
-    EPwm2Regs.CMPA.half.CMPA = MAX_SPEED;
-    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
-    EPwm4Regs.CMPA.half.CMPA = MIN_SPEED;
-    EPwm5Regs.CMPA.half.CMPA = MAX_SPEED;
 }
 
 

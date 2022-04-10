@@ -10,8 +10,8 @@
 
 //PWM宏定义
 #define EPWM1_TIMER_TBPRD  2000  // Period register 这个需要改！！7500对应13Hz？？？？   2000对应50hz???  1000对应100hz
-#define EPWM1_MAX_CMPA     1995
-#define EPWM1_MIN_CMPA        5
+#define EPWM1_MAX_CMPA     1999
+#define EPWM1_MIN_CMPA        0
 #define EPWM1_MAX_CMPB     1950
 #define EPWM1_MIN_CMPB       50
 #define EPWM2_TIMER_TBPRD  2000  // Period register 这个需要改！！

@@ -18,6 +18,9 @@
 
 //int counter_P = 0;          // 用于记录压力故障事件的次数，防止误触发
 extern int state;
+extern double press1, press2, press3;
+extern int pwm1, pwm2;
+int rt_flag = 0;    // 1代表收腿，2代表蹬腿
 
 int main(void)
 {
@@ -52,10 +55,11 @@ int main(void)
     ERTM;          // Enable Global realtime interrupt DBGM
 
 //    CpuTimer0Regs.TCR.all = 0x4001;     // 设置TIE = 1，开启定时器0中断
+
     UNLOAD();
-    DELAY_US(50000);
+    delay_ms(1000);
     MIDDLE();
-    DELAY_US(1500000);          //等待时间，为蓝牙连接预留充足的时间
+//    delay_ms(4000);         //等待时间，为蓝牙连接预留充足的时间
     for(;;)
     {
         if (bt_uart_receive(&ch, 1))    /*!< 获取串口fifo一个字节 */
@@ -65,11 +69,43 @@ int main(void)
                 btParsing(&rx_Packet);
             }
         }
-        if(state == 3 && arg < 0)
+        if(state == 3)
         {
-            motor_stop();
-
-            MIDDLE();
+            if(press1 > P_max || press2 > P_max || press3 > P_max)
+            {
+                motor_stop();
+                UNLOAD();
+                delay_ms(200);
+                pwm1 = 0;
+                pwm2 = 0;
+                MIDDLE();
+                state = 2;
+            }
+        }
+        else if(state == 4)
+        {
+            if(rt_flag == 1)
+            {
+                if(arg > ANGLE_PULL)
+                {
+                    PULL();
+                }
+                else
+                {
+                    rt_flag = 2;
+                }
+            }
+            else if(rt_flag == 2)
+            {
+                if(arg < ANGLE_PUSH)
+                {
+                    PUSH();
+                }
+                else
+                {
+                    rt_flag = 1;
+                }
+            }
         }
     }
 }

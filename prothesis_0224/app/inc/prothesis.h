@@ -15,10 +15,11 @@
 
 #define MAX_SPEED  1999//MOSFET驱动的第二版电路时1999  光耦版本是0
 #define MIN_SPEED 0
-#define GAIN1 12.3
-#define GAIN2 12.9
-#define GAIN3 12.8
-
+// 以第一个传感器的K值为基准，在卸载态，标定后两个传感器的K值
+#define K_GAIN1 16.6
+#define K_GAIN2 16.76
+#define K_GAIN3 16.85
+#define B_GAIN  -4.98
 #define PI        3.1415926
 
 //#define k1_cp     -1.9959
@@ -129,7 +130,11 @@
 #define d_x       4.6e-2
 #define d_y       0.175
 
-//有限状态机阈值的定义
+// 假肢往复运动极值角度的切换值
+#define ANGLE_PUSH  6
+#define ANGLE_PULL  -20
+
+// 有限状态机阈值的定义
 #define v_leg_yz    4
 #define zd_press1H  80
 #define zd_press2H  80
@@ -137,7 +142,7 @@
 #define zd_press2L  50
 #define angle_push  115
 
-#define P_max       18             //高压区油液压力的最大值
+#define P_max       13.5            //高压区油液压力的最大值
 #define P_min       0.1           //低压区油液压力的最小值
 
 #define yuzhi_pwm        1300
