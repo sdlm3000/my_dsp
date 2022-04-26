@@ -145,7 +145,7 @@ void InitEPwm4Example()
    // Setup counter mode
    EPwm4Regs.TBCTL.bit.CTRMODE = TB_COUNT_UPDOWN; // Count up 对称输出模式
    EPwm4Regs.TBCTL.bit.PHSEN = TB_DISABLE;        // Disable phase loading禁止相位加载
-   EPwm4Regs.TBCTL.bit.HSPCLKDIV = 0x4;       // Clock ratio to SYSCLKOUT
+   EPwm4Regs.TBCTL.bit.HSPCLKDIV = 0x3;       // Clock ratio to SYSCLKOUT
    EPwm4Regs.TBCTL.bit.CLKDIV = 0x7;//64分频
 
    // Setup shadowing
@@ -177,7 +177,7 @@ void InitEPwm5Example()
    // Setup counter mode
    EPwm5Regs.TBCTL.bit.CTRMODE = TB_COUNT_UPDOWN; // Count up 对称输出模式
    EPwm5Regs.TBCTL.bit.PHSEN = TB_DISABLE;        // Disable phase loading禁止相位加载
-   EPwm5Regs.TBCTL.bit.HSPCLKDIV = 0x5;       // Clock ratio to SYSCLKOUT
+   EPwm5Regs.TBCTL.bit.HSPCLKDIV = 0x3;       // Clock ratio to SYSCLKOUT
    EPwm5Regs.TBCTL.bit.CLKDIV = 0x7;//65分频
 
    // Setup shadowing

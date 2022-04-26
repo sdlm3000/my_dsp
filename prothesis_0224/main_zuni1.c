@@ -21,6 +21,7 @@ extern int state;
 extern double press1, press2, press3;
 extern int pwm1, pwm2;
 int rt_flag = 0;    // 1代表收腿，2代表蹬腿
+float pwm_counter = 1.0;
 
 int main(void)
 {
@@ -107,5 +108,16 @@ int main(void)
                 }
             }
         }
+//        else if(state == 0) // 变频测试
+//        {
+//
+//            EPwm2Regs.CMPA.half.CMPA = 0.2 * MAX_SPEED;
+//            EPwm3Regs.CMPA.half.CMPA = 0.3 * MAX_SPEED;
+//            EPwm5Regs.CMPA.half.CMPA = 0.8 * MAX_SPEED;
+//            EPwm4Regs.TBPRD = EPWM4_TIMER_TBPRD * pwm_counter;           // Set timer period 804 TBCLKs
+//            EPwm4Regs.CMPA.half.CMPA = 0.6 * EPWM4_TIMER_TBPRD * pwm_counter;
+//            pwm_counter += 0.05;
+//        }
+
     }
 }
