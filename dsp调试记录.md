@@ -17,6 +17,7 @@
 	1. 优化传输数据的数据结构，减少整体的传输字节数。
 	2. 将控制中断的频率降低为100HZ。
 	3. 在进一步寻找蓝牙和dsp的波特率平衡点，比如 115200 * 2 或者 115200 * 3
+
 ## 2022.03.27
 
 ​	蹬腿极限 -121.99，平放约为 -135，收腿极限 -158.80。设平放角度为0，转换一下蹬腿极限为angle_zhi = 13，平放角度angle_ping = 0，收腿极限angle_bei  = -24
@@ -64,28 +65,110 @@ else if(flag == 2)
 }
 ```
 
-## 2022.03.31
 
-![image-20220331101046599](images/dsp调试记录/image-20220331101046599.png)
 
-|        | valve8 | valve7 | valve2 | valve3 |
-| :----: | :----: | :----: | :----: | :----: |
-| 卸荷态 |   ON   |   ON   |  OFF   |  OFF   |
-| 被动态 |  OFF   |  OFF   |  OFF   |  OFF   |
-|  蹬腿  |  OFF   |   ON   |   ON   |  OFF   |
-|  收腿  |   ON   |  OFF   |  OFF   |   ON   |
 
-(注意：其中ON代表通电，OFF代表断电)
 
-​	实际假肢电路上设计的为，
+## 2022.04.09
 
-​	pwm5 -> valve8, pwm4 -> valve2, pwm3 -> valve7, pwm2 -> valve3
 
-​	对于被动态的阻尼实验，有被动跖曲和被动背曲，单阀控制阻尼主要控制出油口的开关阀，而我设计的实验主要是做被动背曲的。
 
-|          | valve8 | valve7 | valve2 | valve3 |
-| :------: | :----: | :----: | :----: | :----: |
-| 被动背曲 |  OFF   |  OFF   |  PWM   |  OFF   |
-| 被动跖曲 |  OFF   |  OFF   |  OFF   |  PWM   |
+```c
+// 单阀控制策略
+void MIDDLE()
+{
+    // 被动跖屈控制EPWM2
+    EPwm2Regs.CMPA.half.CMPA = valve_pwm_middle_zhi;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    // 被动背曲控制EPWM4
+    EPwm4Regs.CMPA.half.CMPA = valve_pwm_middle_bei;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
+}
 
-​	对应在假肢实际电路上，被动背曲控制pwm4，被动跖曲控制pwm2
+// 双阀控制策略
+// valve_pwm_middle_zhi 代表 EPWM2 的占空比
+// valve_pwm_middle_bei 代表 EPWM4 的占空比
+
+#define PWM_linear_MAX	    0.8
+#define PMW_linear_MIN	    0.15
+#define PWM_MIDDLE_ZHI	    2
+#define PWM_MIDDLE_BEI	    4
+#define EPWM_TIMER_TBPRD    2000
+
+int pwm2_timer_tbprd = 2000;
+int pwm4_timer_tbprd = 2000;
+
+void set_epwm_timer(int pwm_index, int pwm_timer_tbprd)
+{
+    if(pwm_index == 2)
+    {
+        EPwm2Regs.TBPRD = pwm_timer_tbprd;           // Set timer period TBCLKs
+    }
+    else if(pwm_index == 4)
+    {
+        EPwm4Regs.TBPRD = pwm_timer_tbprd;           // Set timer period TBCLKs
+    }
+}
+
+void MIDDLE_zhi()
+{
+    if(valve_pwm_middle_zhi > PWM_linear_MAX)		// 高占空比非线性区
+    {
+        int pwm_tmp = (1 - PWM_linear_MAX) * (1 - valve_pwm_middle_zhi) * EPWM_TIMER_TBPRD;
+        set_epwm_timer(PWM_MIDDLE_ZHI, pwm_tmp);
+        valve_pwm_middle_bei = 0;
+
+    }
+    else if(valve_pwm_middle_zhi < PWM_linear_MIN)	// 低占空比非线性区
+    {
+        set_epwm_timer(PWM_MIDDLE_ZHI, EPWM_TIMER_TBPRD);
+        valve_pwm_middle_bei = 0.8;
+        valve_pwm_middle_zhi = PWM_linear_MIN + valve_pwm_middle_zhi;
+    }
+    else
+    {
+        set_epwm_timer(PWM_MIDDLE_ZHI, EPWM_TIMER_TBPRD);
+        valve_pwm_middle_bei = 0;
+    }
+    EPwm2Regs.CMPA.half.CMPA = valve_pwm_middle_zhi;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = valve_pwm_middle_bei;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
+}
+
+
+void MIDDLE_bei()
+{
+    if(valve_pwm_middle_bei > PWM_linear_MAX)		// 高占空比非线性区
+    {
+        int pwm_tmp = (1 - PWM_linear_MAX) * (1 - valve_pwm_middle_bei) * EPWM_TIMER_TBPRD;
+        set_epwm_timer(PWM_MIDDLE_BEI, pwm_tmp);
+        valve_pwm_middle_zhi = 0;
+
+    }
+    else if(valve_pwm_middle_bei < PWM_linear_MIN)	// 低占空比非线性区
+    {
+        set_epwm_timer(PWM_MIDDLE_BEI, EPWM_TIMER_TBPRD);
+        valve_pwm_middle_zhi = 0.8;
+        valve_pwm_middle_bei = PWM_linear_MIN + valve_pwm_middle_bei;
+    }
+    else
+    {
+        set_epwm_timer(PWM_MIDDLE_BEI, EPWM_TIMER_TBPRD);
+        valve_pwm_middle_zhi = 0;
+    }
+    EPwm2Regs.CMPA.half.CMPA = valve_pwm_middle_zhi;
+    EPwm3Regs.CMPA.half.CMPA = MIN_SPEED;
+    EPwm4Regs.CMPA.half.CMPA = valve_pwm_middle_bei;
+    EPwm5Regs.CMPA.half.CMPA = MIN_SPEED;
+}
+
+```
+
+
+
+## 2022.04.12
+
+​	假肢的压力传感器的位置，其中P1的位置肯定对，P2和P3不清楚：
+
+![image-20220412194128770](images/dsp调试记录/image-20220412194128770.png)
