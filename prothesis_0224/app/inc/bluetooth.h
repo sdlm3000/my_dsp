@@ -28,7 +28,8 @@ enum controlmsgid
 {
     STATE_SET1      = 0x01,     /*!< 基本状态设置 */
     STATE_SET2      = 0x02,     /*!< 工作状态设置 */
-    PWM_SET         = 0x03,     /*!< PWM设置 */
+    PWM_SET1        = 0x03,     /*!< PWM设置 */
+    PWM_SET2        = 0x04,     /*!< 变频设置 */
 };
 
 #define BT_MAX_DATA_SIZE 28

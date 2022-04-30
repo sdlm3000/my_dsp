@@ -18,9 +18,9 @@
 
 //int counter_P = 0;          // 用于记录压力故障事件的次数，防止误触发
 extern int state;
-extern double press1, press2, press3;
+extern double press1, press2, press3, arg;
 extern int pwm1, pwm2;
-int rt_flag = 0;    // 1代表收腿，2代表蹬腿
+int rt_flag1 = 0;    // 1代表收腿，2代表蹬腿
 float pwm_counter = 1.0;
 
 int main(void)
@@ -72,7 +72,7 @@ int main(void)
         }
         if(state == 3)
         {
-            if(press1 > P_max || press2 > P_max || press3 > P_max)
+            if(arg > 7.8 || press1 > P_max || press2 > P_max || press3 > P_max)
             {
                 motor_stop();
                 UNLOAD();
@@ -85,7 +85,7 @@ int main(void)
         }
         else if(state == 4)
         {
-            if(rt_flag == 1)
+            if(rt_flag1 == 1)
             {
                 if(arg > ANGLE_PULL)
                 {
@@ -93,10 +93,10 @@ int main(void)
                 }
                 else
                 {
-                    rt_flag = 2;
+                    rt_flag1 = 2;
                 }
             }
-            else if(rt_flag == 2)
+            else if(rt_flag1 == 2)
             {
                 if(arg < ANGLE_PUSH)
                 {
@@ -104,7 +104,7 @@ int main(void)
                 }
                 else
                 {
-                    rt_flag = 1;
+                    rt_flag1 = 1;
                 }
             }
         }

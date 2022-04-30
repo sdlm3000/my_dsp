@@ -67,6 +67,32 @@ else if(flag == 2)
 
 
 
+## 2022.03.31
+
+![image-20220331101046599](images/dsp调试记录/image-20220331101046599.png)
+
+|        | valve8 | valve7 | valve2 | valve3 |
+| ------ | ------ | ------ | ------ | ------ |
+| 卸荷态 | ON     | ON     | OFF    | OFF    |
+| 被动态 | OFF    | OFF    | OFF    | OFF    |
+| 蹬腿   | OFF    | ON     | ON     | OFF    |
+| 收腿   | ON     | OFF    | OFF    | ON     |
+
+(注意：其中ON代表通电，OFF代表断电)
+
+ 实际假肢电路上设计的为，
+
+ pwm5 -> valve8, pwm4 -> valve2, pwm3 -> valve7, pwm2 -> valve3
+
+ 对于被动态的阻尼实验，有被动跖曲和被动背曲，单阀控制阻尼主要控制出油口的开关阀，而我设计的实验主要是做被动背曲的。
+
+|          | valve8 | valve7 | valve2 | valve3 |
+| -------- | ------ | ------ | ------ | ------ |
+| 被动背曲 | OFF    | OFF    | PWM    | OFF    |
+| 被动跖曲 | OFF    | OFF    | OFF    | PWM    |
+
+ 对应在假肢实际电路上，被动背曲控制pwm4，被动跖曲控制pwm2
+
 
 
 ## 2022.04.09
