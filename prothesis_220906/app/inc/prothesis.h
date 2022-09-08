@@ -16,9 +16,9 @@
 #define MAX_SPEED  1999//MOSFET驱动的第二版电路时1999  光耦版本是0
 #define MIN_SPEED 0
 // 以第一个传感器的K值为基准，在卸载态，标定后两个传感器的K值
-#define K_GAIN1 16.6
-#define K_GAIN2 16.76
-#define K_GAIN3 16.85
+#define K_GAIN1 16.20
+#define K_GAIN2 16.99
+#define K_GAIN3 16.75
 #define B_GAIN  -4.98
 #define PI        3.1415926
 

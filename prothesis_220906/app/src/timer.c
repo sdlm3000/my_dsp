@@ -11,7 +11,6 @@
 #include "prothesis.h"
 #include "jy61p.h"
 #include "stdio.h"
-#include "ringbuffer.h"
 
 // 陀螺仪数据获取
 float a[3], w[3], Angle[3];
@@ -124,7 +123,7 @@ interrupt void TIM0_IRQn(void)
 {
     int i;
     double temp;
-    char buf[100] = {};
+    Uint8 buf[100] = {};
 
     CpuTimer0.InterruptCount++;
     AdcRegs.ADCTRL2.all = 0x2000;   // 软件向SEQ1位写1开启转换触发
@@ -189,9 +188,9 @@ interrupt void TIM0_IRQn(void)
     // 发送数据至上位机
     if(CpuTimer0.InterruptCount % 2 == 0)
     {
-        Uint8 strLen = sprintf(buf, "%.2f %.2f %.2f %.2f %.2f %.2f %.2f\r\n", arg, press1, press2, press3, P_foot1, P_foot2, P_foot3);
+        Uint16 dataLen = sprintf(buf, "%.2f %.2f %.2f %.2f %.2f %.2f %.2f\r\n", arg, press1, press2, press3, P_foot1, P_foot2, P_foot3);
 //        uart_printf("%d %.2f %.2f %.2f %.2f %.2f %.2f %.2f\r\n", aa, arg, press1, press2, press3, P_foot1, P_foot2, P_foot3);
-
+        usartb_sendData(buf, dataLen);
     }
 
     sum1 = 0;
