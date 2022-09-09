@@ -149,9 +149,6 @@ interrupt void TIM0_IRQn(void)
     }
 
     // 转换获得液压压力
-    tmp1 = ((double)sum1) * 3 / 4096 / AVG;
-    tmp2 = ((double)sum2) * 3 / 4096 / AVG;
-    tmp3 = ((double)sum3) * 3 / 4096 / AVG;
     press1 = (((double)sum1) * 3 / 4096 / AVG) * K_GAIN1 + B_GAIN;
     press2 = (((double)sum2) * 3 / 4096 / AVG) * K_GAIN2 + B_GAIN;
     press3 = (((double)sum3) * 3 / 4096 / AVG) * K_GAIN3 + B_GAIN;
@@ -163,14 +160,14 @@ interrupt void TIM0_IRQn(void)
         if(counter_P >= 15)
         {
             motor_stop();
-//            UNLOAD();
             counter_P = 0;
         }
     }
 
     // 转换获得踝关节角度
     arg = ((((double)sum4) * 3 / 4096 / AVG) * 100);//采样的实际电压 0-3v
-    arg = 196.4 - arg;     // 70为零位的角度传感器值
+    // 20220909  蹬腿极限 -> 12.70  收腿极限 -> -24.6
+    arg = 186.4 - arg;     // 70为零位的角度传感器值
     temp = 0;
     for(i = 0; i < 4; i++)
     {
