@@ -29,7 +29,12 @@ enum controlmsgid
     STATE_SET1      = 0x01,     /*!< 基本状态设置 */
     STATE_SET2      = 0x02,     /*!< 工作状态设置 */
     ANGLE_SET       = 0x03,     /*!< 角度相关阈值设置 */
+    PRESSURE_SET    = 0x04,     /*!< 角度相关阈值设置 */
+    VALVE_PWM_SET   = 0x05,     /*!< VALVE2 PWM阈值设置 */
+    VALUE_GET       = 0x10,     /*!< 获取可修改变量 */
 };
+
+
 
 #define BT_MAX_DATA_SIZE 28
 

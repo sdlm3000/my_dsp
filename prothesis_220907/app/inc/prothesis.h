@@ -8,19 +8,17 @@
 #ifndef _PROTHESIS_H_
 #define _PROTHESIS_H_
 
-#define AVG        8  // Average sample limit
-#define ZOFFSET    0x00  // Average Zero offset
+#define BUF_SIZE    10  // Sample buffer size
 
-#define BUF_SIZE   5  // Sample buffer size
+#define MAX_SPEED   1999//MOSFET驱动的第二版电路时1999  光耦版本是0
+#define MIN_SPEED   0
 
-#define MAX_SPEED  1999//MOSFET驱动的第二版电路时1999  光耦版本是0
-#define MIN_SPEED 0
 // 以第一个传感器的K值为基准，在卸载态，标定后两个传感器的K值
-#define K_GAIN1 16.20
-#define K_GAIN2 16.99
-#define K_GAIN3 16.75
-#define B_GAIN  -4.98
-#define PI        3.1415926
+#define K_GAIN1     16.50
+#define K_GAIN2     16.99
+#define K_GAIN3     16.75
+#define B_GAIN      -4.98
+#define PI          3.1415926
 
 //#define k1_cp     -1.9959
 //#define k2_cp     -0.5562
@@ -121,7 +119,6 @@
 #define b_pp    0.05
 #define xita_pp -13
 
-
 #define m_A       0.11
 #define A_p       1.7584e-4
 
@@ -130,43 +127,61 @@
 #define d_x       4.6e-2
 #define d_y       0.175
 
-// 假肢往复运动极值角度的切换值
-
-
-// 有限状态机阈值的定义
-#define v_leg_yz    4
-#define zd_press1H  80
-#define zd_press2H  80
-#define zd_press1L  50
-#define zd_press2L  50
-#define angle_push  115
-
-#define P_max       13.5            //高压区油液压力的最大值
-#define P_min       0.1           //低压区油液压力的最小值
-
-#define yuzhi_pwm        1300
-#define P_high           14
-
-#define Kp_2    100.0
+// PID控制器的参数
 #define Kp      50.0
 
-#define xishu   1.2
-
-#define max_valve4 300
-#define max_valve3 1600
-#define min_valve2 1999
-
-// 用于蓝牙修改的变量
-extern int ANGLE_PUSH;
-extern int ANGLE_PULL;
+// 力矩计算的调整增益
+#define T_GAIN  1.2
 
 
+/* 假肢的控制输出状态 */
+enum pro_control
+{
+    NO_CONTROL_OUT          = 0x00,     /*!< 不输出 */
+    CONTROL_OUT             = 0x01,     /*!< 输出 */
+    CONTROL_RESET           = 0x02,     /*!< 控制初始化 */
+};
 
-// 控制量
+/* 假肢的步态 */
+enum prothesis_state
+{
+    UNLOAD_STATE            = 0x00,     /*!< 卸荷态 */
+    MIDDLE_ZHI_STATE        = 0x01,     /*!< 被动跖曲 */
+    MIDDLE_BEI_STATE        = 0x02,     /*!< 被动背曲 */
+    PUSH_STATE              = 0x03,     /*!< 主动跖曲 */
+    PULL_STATE              = 0x04,     /*!< 主动背曲 */
+};
+
+/*********  步态状态变量 *********/
+extern int proState; 
+
+extern int motorState;
+
+/********* 假肢的控制量 *********/
 extern int valve_pwm_middle_zhi;
 extern int valve_pwm_middle_bei;
 extern int valve_pwm_push;
-extern int state_motor;
+extern int middle_zhi_controlFlag;
+
+/********* 用于蓝牙修改的变量 *********/
+extern float ANGLE_MIDDLE_PUSH;
+extern float ANGLE_PUAH_PULL;   
+extern float ANGLE_PULL_MIDDLE;
+extern float ANGLE_ZHI_BEI;
+extern float P_MAX;
+extern float P_HIGH;
+extern int CONTROL_FLAG;
+extern int MIN_VALVE_2;
+extern int MAX_VALVE_3;
+extern int MAX_VALVE_4;
+
+
+/********* 假肢的传感器参数 *********/
+extern float a[3], w[3], Angle[3];
+extern double P_foot1, P_foot2, P_foot3;
+extern double press1, press2, press3;
+extern double angle;
+
 
 
 void valveinit(void);

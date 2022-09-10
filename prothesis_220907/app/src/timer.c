@@ -11,16 +11,24 @@
 #include "prothesis.h"
 #include "jy61p.h"
 #include "stdio.h"
+#include "adc.h"
 
-// 陀螺仪数据获取
-float a[3], w[3], Angle[3];
+extern int middle_zhi_controlFlag;
+extern double Beta, Beta_last;
+extern double W_BD;
+extern double Alpha, Alpha_cos, Alpha_sin;
+extern double F_A;
+extern double T;
+extern double delta_P;
+extern double delta_P0;
+extern double dd_P;
 
-double tmp1, tmp2, tmp3;
-int num1 = 0;
-int num2 = 0;
+extern int valve_pwm_middle_zhi;
+extern int valve_pwm_middle_bei;
+extern int valve_pwm_push;
 
-// 电压数据
-static double P_foot1 = 0.0, P_foot2 = 0.0, P_foot3 = 0.0;
+// 发送数据标志位
+int DATA_SEND = 1;
 
 // ADC采样相关取平均值数组
 static Uint32 sum1 = 0, sum2 = 0,sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 = 0;
@@ -32,18 +40,11 @@ static Uint16 SampleTable5[BUF_SIZE];
 static Uint16 SampleTable6[BUF_SIZE];
 static Uint16 SampleTable7[BUF_SIZE];
 
+// 压力过高的次数，连续超过一定次数才会出发过压保护，防止误触发
+static int counter_P = 0;
+
 // 踝关节角度平均值
-static double arg_ave[5] = {0.0};
-
-// 
-double press1 = 0, press2 = 0, press3 = 0;
-double arg = 0.0;
-
-int counter_P = 0;
-
-
-
-extern int pwm1, pwm2;
+static double angle_ave[5] = {0.0};
 
 
 //定时器0初始化函数
@@ -81,9 +82,6 @@ void TIM0_Init(float Freq, float Period)
     //开启CPU第一组中断并使能第一组中断的第7个小中断，即定时器0
     IER |= M_INT1;
     PieCtrlRegs.PIEIER1.bit.INTx7 = 1;
-//    //使能总中断
-//    EINT;
-//    ERTM;
 
 }
 
@@ -154,7 +152,7 @@ interrupt void TIM0_IRQn(void)
     press3 = (((double)sum3) * 3 / 4096 / AVG) * K_GAIN3 + B_GAIN;
 
     // 内部液压压力限位
-    if(press1 >= P_max || press1 <= 0)
+    if(press1 >= P_MAX || press1 <= 0)
     {
         counter_P++;
         if(counter_P >= 15)
@@ -165,27 +163,115 @@ interrupt void TIM0_IRQn(void)
     }
 
     // 转换获得踝关节角度
-    arg = ((((double)sum4) * 3 / 4096 / AVG) * 100);//采样的实际电压 0-3v
-    // 20220909  蹬腿极限 -> 12.70  收腿极限 -> -24.6
-    arg = 186.4 - arg;     // 70为零位的角度传感器值
+    angle = ((((double)sum4) * 3 / 4096 / AVG) * 100);//采样的实际电压 0-3v
+    // 20220910  蹬腿极限 -> -12.70  收腿极限 -> 24.6
+    angle = -186.4 + angle;
     temp = 0;
     for(i = 0; i < 4; i++)
     {
-        arg_ave[i] = arg_ave[i+1];
-        temp = temp + arg_ave[i];
+        angle_ave[i] = angle_ave[i + 1];
+        temp = temp + angle_ave[i];
     }
-    arg_ave[4] = arg;
-    arg = (temp + arg_ave[4]) / 5; // 5点滑动平均
+    angle_ave[4] = angle;
+    angle= (temp + angle_ave[4]) / 5; // 5点滑动平均
 
     // 转换获得足底压力
     P_foot1 = ((double)sum5) * 3 / 4096 / AVG; //采样的实际电压 0-3v
     P_foot2 = ((double)sum6) * 3 / 4096 / AVG; //采样的实际电压 0-3v
     P_foot3 = ((double)sum7) * 3 / 4096 / AVG; //采样的实际电压 0-3v
 
-    // 发送数据至上位机
-    if(CpuTimer0.InterruptCount % 2 == 0)
+    Beta_last = Beta;
+    Beta = angle;
+
+//    W_BD = (Beta - Beta_last) * PI / 180.0 / 0.005;   // 定时周期为5ms
+    W_BD = (Beta - Beta_last) / 0.005;   // 定时周期为5ms
+    delta_P0 = press2 - press3;
+    if(CpuTimer0.InterruptCount >= 10)
     {
-        Uint16 dataLen = sprintf(buf, "%.2f %.2f %.2f %.2f %.2f %.2f %.2f\r\n", arg, press1, press2, press3, P_foot1, P_foot2, P_foot3);
+        Alpha_cos = (L_BD * cos(Beta * PI / 180.0) - d_x) / L_AB;
+        Alpha_sin = sqrt(1 - Alpha_cos * Alpha_cos);
+        // 步骤4：求解T，F_A
+        if(proState == MIDDLE_ZHI_STATE)
+        {
+            temp = Beta - xita_cp;
+            T = (k1_cp * temp + k2_cp * temp * temp + b_cp * W_BD) * T_GAIN;
+            Alpha = acos(Alpha_cos);
+            F_A = T / L_BD * cos((90.0 - Beta) / 180.0 * PI - Alpha) * Alpha_sin;
+            // 求解delta_P
+            delta_P = (F_A) / A_p / 1000000;
+
+            dd_P = delta_P0 - delta_P;
+
+
+            if(P_foot3 > 0.5)
+            {
+                middle_zhi_controlFlag = 1;
+            }
+            if(middle_zhi_controlFlag == 1)
+            {
+                valve_pwm_middle_zhi = valve_pwm_middle_zhi + (int)(Kp * dd_P);
+                if(valve_pwm_middle_zhi < MIN_SPEED)
+                {
+                    valve_pwm_middle_zhi = MIN_SPEED;
+                }
+                else if(valve_pwm_middle_zhi > MAX_VALVE_4)
+                {
+                    valve_pwm_middle_zhi = MAX_VALVE_4;
+                }
+            }
+//            valve_pwm_middle_zhi = max_valve4;
+        }
+        else if(proState == MIDDLE_ZHI_STATE)
+        {
+            temp = Beta - xita_cd;
+            T = (k1_cd * temp + k2_cd * temp * temp + b_cd * W_BD) * T_GAIN;
+            Alpha = acos(Alpha_cos);
+            F_A = T / L_BD * cos((90 - Beta) / 180.0 * PI - Alpha) * Alpha_sin;
+            // 求解delta_P
+            delta_P = (F_A) / A_p / 1000000;
+
+            dd_P = delta_P0 - delta_P;
+            valve_pwm_middle_zhi = 0;
+            valve_pwm_middle_bei = (angle + 4) / 3 * MAX_VALVE_3;
+            if(valve_pwm_middle_bei < MIN_SPEED)
+            {
+                valve_pwm_middle_bei = MIN_SPEED;
+
+            }
+            else if(valve_pwm_middle_bei > MAX_VALVE_3)
+            {
+                valve_pwm_middle_bei = MAX_VALVE_3;
+            }
+        }
+        else if(proState == PUSH_STATE)
+        {
+            temp = Beta - xita_pp;
+            T = (k1_pp * temp + k2_pp * temp * temp + b_pp * W_BD) * T_GAIN;
+            Alpha = acos(Alpha_cos);
+            F_A = T / L_BD * cos((90 - Beta) / 180.0 * PI - Alpha) * Alpha_sin;
+            // 求解delta_P
+            delta_P = (F_A) / A_p / 1000000;
+
+            dd_P = delta_P0 - delta_P;
+
+            valve_pwm_push = valve_pwm_push + (int)(Kp * dd_P);
+            if(valve_pwm_push < MIN_VALVE_2)
+            {
+                valve_pwm_push = MIN_VALVE_2;
+            }
+            else if(valve_pwm_push > MAX_SPEED)
+            {
+                valve_pwm_push = MAX_SPEED;
+            }
+            valve_pwm_push = MIN_VALVE_2;
+        }
+    }
+
+    // 发送数据至上位机
+    if(CpuTimer0.InterruptCount % 2 == 0 && DATA_SEND == 1)
+    {
+        Uint16 dataLen = sprintf(buf, "%.2f %.2f %.2f %.2f %.2f %.2f %.2f %d %d %d %d %d\r\n", angle, press1, press2, press3,
+                                P_foot1, P_foot2, P_foot3, proState, motorState, valve_pwm_middle_zhi, valve_pwm_middle_bei, valve_pwm_push);
         usartb_sendData(buf, dataLen);
     }
 
