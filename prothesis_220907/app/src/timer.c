@@ -12,6 +12,7 @@
 #include "jy61p.h"
 #include "stdio.h"
 #include "adc.h"
+#include "arc.h"
 
 extern int middle_zhi_controlFlag;
 extern double Beta, Beta_last;
@@ -165,7 +166,7 @@ interrupt void TIM0_IRQn(void)
     // 转换获得踝关节角度
     angle = ((((double)sum4) * 3 / 4096 / AVG) * 100);//采样的实际电压 0-3v
     // 20220910  蹬腿极限 -> -12.70  收腿极限 -> 24.6
-    angle = -186.4 + angle;
+    angle = -165.4 + angle;
     temp = 0;
     for(i = 0; i < 4; i++)
     {
@@ -221,7 +222,7 @@ interrupt void TIM0_IRQn(void)
             }
 //            valve_pwm_middle_zhi = max_valve4;
         }
-        else if(proState == MIDDLE_ZHI_STATE)
+        else if(proState == MIDDLE_BEI_STATE)
         {
             temp = Beta - xita_cd;
             T = (k1_cd * temp + k2_cd * temp * temp + b_cd * W_BD) * T_GAIN;
@@ -231,7 +232,7 @@ interrupt void TIM0_IRQn(void)
             delta_P = (F_A) / A_p / 1000000;
 
             dd_P = delta_P0 - delta_P;
-            valve_pwm_middle_zhi = 0;
+            // valve_pwm_middle_zhi = 0;
             valve_pwm_middle_bei = (angle + 4) / 3 * MAX_VALVE_3;
             if(valve_pwm_middle_bei < MIN_SPEED)
             {
