@@ -43,11 +43,12 @@ void  main()
     IFR = 0x0000;
     InitPieVectTable();
 
-    UARTa_Init(115200);
+    UARTa_Init(230400);
+//    UARTa_Init(115200);
     I2CA_Init();
 //    LED_Init();
 
-    TIM0_Init(150,50000);    // 10ms
+    TIM0_Init(150,5000);    // 10ms
 //    TIM1_Init(150,5000);  // 10ms
     //使能总中断
     EINT;

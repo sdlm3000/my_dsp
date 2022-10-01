@@ -144,9 +144,36 @@ interrupt void TIM0_IRQn(void)
         scia_msg("3 ");
         jy61p_GetData(flag, 0x52, a, w, Angle);
         jy61p_SendData(flag, a, w, Angle);
+//        counter = 0;
+    }
+    else if(counter == 4)
+    {
+        scia_msg("4 ");
+        jy61p_GetData(flag, 0x53, a, w, Angle);
+        jy61p_SendData(flag, a, w, Angle);
+//        counter = 0;
+    }
+    else if(counter == 5)
+    {
+        scia_msg("5 ");
+        jy61p_GetData(flag, 0x54, a, w, Angle);
+        jy61p_SendData(flag, a, w, Angle);
+//        counter = 0;
+    }
+    else if(counter == 6)
+    {
+        scia_msg("6 ");
+        jy61p_GetData(flag, 0x55, a, w, Angle);
+        jy61p_SendData(flag, a, w, Angle);
+//        counter = 0;
+    }
+    else if(counter == 7)
+    {
+        scia_msg("7 ");
+        jy61p_GetData(flag, 0x56, a, w, Angle);
+        jy61p_SendData(flag, a, w, Angle);
         counter = 0;
     }
-
 //    num1++;
 //    if(num1 % 100 == 0)
 //    {
