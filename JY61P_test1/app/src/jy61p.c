@@ -9,12 +9,12 @@
 #include "i2c.h"
 #include "uart.h"
 
-static void ShortToChar(short sData,unsigned char cData[])
+void ShortToChar(short sData,unsigned char cData[])
 {
     cData[0]=sData & 0xff;
     cData[1]=sData >> 8;
 }
-static short CharToShort(unsigned char cData[])
+short CharToShort(unsigned char cData[])
 {
     return ((short)cData[1] << 8) | cData[0];
 }

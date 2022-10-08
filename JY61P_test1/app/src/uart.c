@@ -225,7 +225,7 @@ void scia_int(int data_char)
 }
 
 //´«Êä¸¡µãÊı, xxx.xx
-void scia_float(double data)
+void scia_float(float data)
 {
     unsigned char sci_table[5];
     long a;

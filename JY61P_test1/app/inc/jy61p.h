@@ -81,9 +81,15 @@
 #define DIO_MODE_DOPWM 4
 #define DIO_MODE_GPS 5
 
+#define ACC_TRANS       2048
+#define W_TRANS         16.382
+#define ANGLE_TRANS     182.04
+
 Uint8 jp61p_Init(void);
 Uint8 jy61p_GetData(Uint8 flag, Uint8 mpu_addr, float  * a, float  * w, float  * Angle);
 void jy61p_SendData(Uint8 flag, float *a, float *w, float *Angle);
+short CharToShort(unsigned char cData[]);
+void ShortToChar(short sData,unsigned char cData[]);
 
 
 #endif /* _INC_JY61P_H_ */

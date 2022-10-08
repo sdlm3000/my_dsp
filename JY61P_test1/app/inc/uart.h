@@ -28,7 +28,7 @@ Uint16 usartb_sendData(Uint8 *buf, Uint16 len);
 void scia_xmit(Uint32 a);
 void scia_msg(char *msg);
 void scia_int(int data_char);
-void scia_float(double data);
+void scia_float(float data);
 
 #endif /* _UART_H_ */
 

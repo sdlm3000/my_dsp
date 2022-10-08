@@ -8,32 +8,17 @@
  */
 
 #include "common.h"
-#include "leds.h"
 #include "uart.h"
 #include "i2c.h"
 #include "timer.h"
 #include "jy61p.h"
+#include "anglePred.h"
 
-//void ShortToChar(short sData,unsigned char cData[])
-//{
-//    cData[0]=sData&0xff;
-//    cData[1]=sData>>8;
-//}
-//short CharToShort(unsigned char cData[])
-//{
-//    return ((short)cData[1]<<8)|cData[0];
-//}
+extern int predict_flag;
 
 void  main()
 {
 
-//    unsigned char chrTemp[30];
-////    unsigned char str[100];
-//    float a[3],w[3],h[3],Angle[3];
-//    Uint8 t=0, report=1;            //默认开启上报
-//    float pitch, roll, yaw;       //欧拉角
-//    short aacx ,aacy, aacz;       //加速度传感器原始数据
-//    short gyrox, gyroy, gyroz;    //陀螺仪原始数据
     MemCopy(&RamfuncsLoadStart, &RamfuncsLoadEnd, &RamfuncsRunStart);
     // This function must reside in RAM
     InitFlash();
@@ -46,18 +31,20 @@ void  main()
     UARTa_Init(230400);
 //    UARTa_Init(115200);
     I2CA_Init();
-//    LED_Init();
 
-    TIM0_Init(150,5000);    // 10ms
-//    TIM1_Init(150,5000);  // 10ms
+    TIM0_Init(150, 5000);   // 150000000Hz， 150分频， 5000点一个周期， 200Hz
+//    TIM1_Init(150,5000);
     //使能总中断
     EINT;
     ERTM;
 
     while(1)
     {
-//        scia_msg("3 ");
-//        delay_ms(100);
+        if(predict_flag == 1)
+        {
+            
+        }
+
 
     }
 

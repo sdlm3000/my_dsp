@@ -112,7 +112,7 @@ short MPU_Get_Temperature(void)
 	float temp;
 	MPU_Read_Len(MPU_ADDR, MPU_TEMP_OUTH_REG, 2, buf); 
     raw=((Uint16)buf[0] << 8) | buf[1];  
-    temp = 36.53 + ((double)raw) / 340;  
+    temp = 36.53 + ((float)raw) / 340;  
     return temp * 100;;
 }
 
