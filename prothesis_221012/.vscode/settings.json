@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "anglepred.h": "c",
+        "i2c.h": "c",
+        "uart.h": "c"
+    }
+}
