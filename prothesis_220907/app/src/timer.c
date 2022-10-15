@@ -122,7 +122,7 @@ interrupt void TIM0_IRQn(void)
 {
     int i;
     double temp;
-    Uint8 buf[100] = {};
+    Uint16 buf[32] = {};
 
     CpuTimer0.InterruptCount++;
     AdcRegs.ADCTRL2.all = 0x2000;   // 软件向SEQ1位写1开启转换触发
@@ -204,12 +204,10 @@ interrupt void TIM0_IRQn(void)
             dd_P = delta_P0 - delta_P;
 
 
-            if(P_foot3 > 0.5)
-            {
+            if(P_foot3 > 0.5) {
                 middle_zhi_controlFlag = 1;
             }
-            if(middle_zhi_controlFlag == 1)
-            {
+            if(middle_zhi_controlFlag == 1) {
                 valve_pwm_middle_zhi = valve_pwm_middle_zhi + (int)(Kp * dd_P);
                 if(valve_pwm_middle_zhi < MIN_SPEED)
                 {

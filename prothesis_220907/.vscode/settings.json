@@ -4,6 +4,7 @@
         "common.h": "c",
         "prothesis.h": "c",
         "jy61p.h": "c",
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "arc.h": "c"
     }
 }
