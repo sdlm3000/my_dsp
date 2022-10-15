@@ -9,7 +9,17 @@
 #include "anglePred.h"
 #include "math.h"
 
+// 角度预测需要的变量
+float rshank_euler_y[N] = {0.0}, rthigh_euler_y[N] = {0.0};
+float pelvic_acc_z[N] = {0.0};
+float t[N] = {0.0};
 
+// 二项式拟合相关矩阵，默认二阶
+float matFunX[3][3] = {0.0};
+float matFunY[3][1] = {0.0};
+
+// 二项式拟合的中间变量
+float pow_x[N][5];
 
 
 // 3*3的矩阵乘法
@@ -65,9 +75,7 @@ float transCoods(float *acc, float *q)
 
 }
 
-// 默认二阶
-float matFunX[3][256] = {0.0};
-float matFunY[3][1] = {0.0};
+
 // 二阶多项式的拟合
 void getCoeff(float *coeff, float *x, float *y, int size, int n)
 {
@@ -79,7 +87,8 @@ void getCoeff(float *coeff, float *x, float *y, int size, int n)
         for(j = 0; j <= n; j++)
         {
             sum = 0;
-            for(k = 0; k < size; k++) sum += pow(x[k], j + i);
+//            for(k = 0; k < size; k++) sum += pow(x[k], j + i);
+            for(k = 0; k < size; k++) sum += pow_x[k][j + i];
             matFunX[i][j] = sum;
         }
     }
@@ -87,7 +96,8 @@ void getCoeff(float *coeff, float *x, float *y, int size, int n)
     for(i = 0; i <= n; i++)
     {
         sum = 0;
-        for(k = 0; k < size; k++) sum += y[k] * pow(x[k], i);
+//        for(k = 0; k < size; k++) sum += y[k] * pow(x[k], i);
+        for(k = 0; k < size; k++) sum += y[k] * pow_x[k][i];
         matFunY[i][0] = sum;
     }
     //矩阵行列式变换

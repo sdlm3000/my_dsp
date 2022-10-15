@@ -69,19 +69,25 @@ void uart_printf(char * fmt, ...) //自定义变参函数
     {
         if ( '\0' != write_buf[i] )
         {
-//            while (SciaRegs.SCIFFTX.bit.TXFFST != 0); //使用SCIA
-//            SciaRegs.SCITXBUF = write_buf[i];
-            while (ScibRegs.SCIFFTX.bit.TXFFST != 0); //使用SCIB
-            ScibRegs.SCITXBUF = write_buf[i];
+            while (SciaRegs.SCIFFTX.bit.TXFFST != 0); //使用SCIA
+            SciaRegs.SCITXBUF = write_buf[i];
+//            while (ScibRegs.SCIFFTX.bit.TXFFST != 0); //使用SCIB
+//            ScibRegs.SCITXBUF = write_buf[i];
         }
     }
 }
 
 // Transmit a character from the SCI'
-void uarta_send_char(Uint8 a)
+Uint16 uarta_send_char(Uint8 a)
 {
-    while (SciaRegs.SCIFFTX.bit.TXFFST != 0);
-    SciaRegs.SCITXBUF=a;
+    Uint16 num = 50000;
+    while (SciaRegs.SCIFFTX.bit.TXFFST != 0)
+    {
+        num--;
+        if(num <= 0) return 1;
+    }
+    SciaRegs.SCITXBUF = a;
+    return 0;
 }
 
 void UARTb_Init(Uint32 baud)
@@ -167,6 +173,22 @@ Uint16 usartb_sendData(Uint8 *buf, Uint16 len)
     for(i = 0; i < len; i++)
     {
         if(uartb_send_char(buf[i]) == 1) return 1;
+    }
+    return 0;
+}
+
+/**
+  * @brief  串口a发送
+  * @param  data: 发送的数据
+  * @param  len: 数据长度
+  * @retval uint8_t: 0成功 其他：失败
+  */
+Uint16 usarta_sendData(Uint8 *buf, Uint16 len)
+{
+    Uint16 i;
+    for(i = 0; i < len; i++)
+    {
+        if(uarta_send_char(buf[i]) == 1) return 1;
     }
     return 0;
 }

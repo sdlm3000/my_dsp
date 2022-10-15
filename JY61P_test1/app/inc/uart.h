@@ -17,12 +17,14 @@
 void UARTa_Init(Uint32 baud);
 void UARTb_Init(Uint32 baud);
 void uart_printf(char * fmt, ...);
-void uarta_send_char(Uint8 a);
+Uint16 uarta_send_char(Uint8 a);
 
 Uint16 uartb_send_char(Uint8 a);
 
 Uint16 usartb_getRxData(Uint8 *buf, Uint16 len);
 Uint16 usartb_sendData(Uint8 *buf, Uint16 len);
+
+Uint16 usarta_sendData(Uint8 *buf, Uint16 len);
 
 // ºÊ»›
 void scia_xmit(Uint32 a);

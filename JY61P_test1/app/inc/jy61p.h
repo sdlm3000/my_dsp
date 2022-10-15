@@ -81,7 +81,7 @@
 #define DIO_MODE_DOPWM 4
 #define DIO_MODE_GPS 5
 
-#define ACC_TRANS       2048
+#define ACC_TRANS       2048.0
 #define W_TRANS         16.382
 #define ANGLE_TRANS     182.04
 

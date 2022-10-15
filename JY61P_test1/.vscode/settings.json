@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "uart.h": "c",
+        "mpu6050.h": "c",
+        "timer.h": "c",
+        "i2c.h": "c",
+        "jy61p.h": "c",
+        "cmath": "c"
+    }
+}
