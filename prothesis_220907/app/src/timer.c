@@ -166,7 +166,8 @@ interrupt void TIM0_IRQn(void)
     // 转换获得踝关节角度
     angle = ((((double)sum4) * 3 / 4096 / AVG) * 100);//采样的实际电压 0-3v
     // 20220910  蹬腿极限 -> -12.70  收腿极限 -> 24.6
-    angle = -165.4 + angle;
+//    angle = -165.4 + angle;
+    angle = -163.4 + angle;
     temp = 0;
     for(i = 0; i < 4; i++)
     {

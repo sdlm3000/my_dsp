@@ -26,7 +26,8 @@ float arc_controller(float q, float q_h, float dq_h, float interval)
 
     // 输出控制率计算
     e = q - q_h;        // 角度误差
-    u_a = 1 / thita[1] * (thita[0] * q + thita[2] - dq_h);  // Ua计算
+    if(thita[1] == 0) thita[1] = 0.1;
+    u_a = -1 / thita[1] * (thita[0] * q + thita[2] - dq_h);  // Ua计算
     u_s = k * e;        // Us计算
     u_out = u_a + u_s;
 

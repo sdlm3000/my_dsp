@@ -26,8 +26,8 @@ int middle_zhi_controlFlag = 0; // MIDDLE_ZHI_STATE开始调整PWM的标志位
 //float ANGLE_MIDDLE_PUSH = 7.0;
 //float ANGLE_PUAH_PULL = -12.0;
 
-float ANGLE_PULL_MIDDLE = 0.5;
-float ANGLE_ZHI_BEI = -6.0;
+float ANGLE_PULL_MIDDLE = 0;
+float ANGLE_ZHI_BEI = -5.5;
 float ANGLE_MIDDLE_PUSH = 5.5;
 float ANGLE_PUAH_PULL = -11.0;
 
@@ -36,8 +36,9 @@ float P_HIGH = 14.0;        // 假肢蓄能最大的标志位
 int CONTROL_FLAG = 0;       // 假肢控制输出的标志位
 
 int MIN_VALVE_2 = 1999;
-int MAX_VALVE_3 = 1400;
-int MAX_VALVE_4 = 500;
+int MAX_VALVE_3 = 1350;
+int MIN_VALVE_3 = 400;
+int MAX_VALVE_4 = 400;
 
 /********* 假肢的传感器参数 *********/
 double P_foot1 = 0.0, P_foot2 = 0.0, P_foot3 = 0.0; // 足底压力

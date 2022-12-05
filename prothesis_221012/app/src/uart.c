@@ -215,8 +215,16 @@ interrupt void UartB_RxInterIsr(void)
 //发送
 void scia_xmit(Uint32 a)
 {
-    while (SciaRegs.SCIFFTX.bit.TXFFST != 0) { }
-    SciaRegs.SCITXBUF=a;
+    Uint16 num = 50000;
+    while (SciaRegs.SCIFFTX.bit.TXFFST != 0)
+    {
+        num--;
+        if(num <= 0) return;
+    }
+    SciaRegs.SCITXBUF = a;
+//    return 0;
+//    while (SciaRegs.SCIFFTX.bit.TXFFST != 0) { }
+//    SciaRegs.SCITXBUF=a;
 }
 
 //传输一个四位整数
@@ -296,8 +304,15 @@ void scia_msg(char * msg)
 //发送
 void scib_xmit(Uint32 a)
 {
-    while (ScibRegs.SCIFFTX.bit.TXFFST != 0) { }
-    ScibRegs.SCITXBUF=a;
+    Uint16 num = 50000;
+    while (ScibRegs.SCIFFTX.bit.TXFFST != 0)
+    {
+        num--;
+        if(num <= 0) return;
+    }
+    ScibRegs.SCITXBUF = a;
+//    while (ScibRegs.SCIFFTX.bit.TXFFST != 0) { }
+//    ScibRegs.SCITXBUF=a;
 }
 
 //传输一个四位整数

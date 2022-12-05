@@ -7,7 +7,7 @@
  */
 #include "common.h"
 #include "uart.h"
-#include "prothesis.h"
+// #include "prothesis.h"
 #include "timer.h"
 #include "pwm.h"
 #include "adc.h"
@@ -21,7 +21,7 @@
 extern int point_num, predict_flag, flag;
 extern float pelvic_acc_z[N], t[N];
 extern float rshank_euler_y[N], rthigh_euler_y[N];
-extern float pow_x[N][5];
+extern float pow_x[N][3];
 
 static float rsh_cosang[N], rth_cosang[N];          // 存放右侧大小腿角度相关变量
 static float Coef[3];                       // 存放二项式拟合的系数
@@ -29,15 +29,16 @@ static float Coef[3];                       // 存放二项式拟合的系数
 float dt = 0.02;                            // IMU的采样间隔，默认为0.02s，即50Hz
 float velocity[N], distance[N];             // 表示重心角速度积分得到的速度、位移
 float velo_pred[N], angle_pred[N];           // 表示预测得到的踝关节角度和角速度   
-int walk_cycle = 0, walk_index_pred = 0;
+int walk_cycle = 0;
 
+static Uint8 buf[32] = {0};
+static Uint16 buf_len = 0;
 
 int main(void)
 {
     Uint8 ch;
     int i, j;
-    Uint8 buf[32] = {0};
-    Uint16 buf_len = 0;
+
     float sum = 0.0, mean = 0.0;
     MemCopy(&RamfuncsLoadStart, &RamfuncsLoadEnd, &RamfuncsRunStart);
     // This function must reside in RAM
@@ -78,9 +79,9 @@ int main(void)
     // 初始化一些运算变量
     for(i = 0; i < N; i++) {
         if(i > 0) t[i] = t[i - 1] + dt;
-        for(j = 0; j < 5; j++)
+        for(j = 2; j < 5; j++)
         {
-            pow_x[i][j] = pow(t[i], j);
+            pow_x[i][j - 2] = pow(t[i], j);
         }
     }
     while(1)
@@ -125,7 +126,6 @@ int main(void)
             buf_len = sprintf(buf, "%.6f %.6f %.6f\n", Coef[0], Coef[1], Coef[2]);
             usartb_sendData(buf, buf_len);
             // 踝关节角度预测
-            walk_index_pred = -1;
             for(i = 0; i < point_num; i++) {
                 float a;
                 distance[i] = distance[i] - Coef[0] - Coef[1] * t[i] - Coef[2] * t[i] * t[i];   // 质心轨迹
@@ -142,10 +142,6 @@ int main(void)
                 if(i == 0) a = 0;
                 else a = angle_pred[i - 1];
                 velo_pred[i] = (angle_pred[i] - a) / dt;
-                if(i == 0) {        // 每个预测步态周期的开始
-                    walk_cycle++;
-                }
-                walk_index_pred++;
                 if(i % 2 == 0) {
                     scib_xmit('P');
                     scib_int(walk_cycle);
@@ -154,6 +150,7 @@ int main(void)
                     scib_msg("\r\n");
                 }
             }
+            walk_cycle++;
         }
     }
 }

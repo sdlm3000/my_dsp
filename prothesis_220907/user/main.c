@@ -37,7 +37,7 @@ int main(void)
     //初始化PIE中断向量表，并使其指向中断服务子程序（ISR）
     InitPieVectTable();
 
-    UARTb_Init(115200);
+    UARTb_Init(921600);
     I2CA_Init();
     PWM_Init();
     ADC_Init();
@@ -97,7 +97,7 @@ int main(void)
             }
             else if(proState == PULL_STATE)
             {
-                if(angle >= ANGLE_PULL_MIDDLE)
+                if(angle >= ANGLE_PULL_MIDDLE || P_foot3 > 0.6)
                 {
                     proState = MIDDLE_ZHI_STATE;
                 }

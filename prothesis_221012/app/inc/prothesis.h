@@ -174,10 +174,9 @@ extern int CONTROL_FLAG;
 extern int MIN_VALVE_2;
 extern int MAX_VALVE_3;
 extern int MAX_VALVE_4;
-
+extern int MIN_VALVE_3;
 
 /********* 假肢的传感器参数 *********/
-extern float a[3], w[3], Angle[3];
 extern double P_foot1, P_foot2, P_foot3;
 extern double press1, press2, press3;
 extern double angle;

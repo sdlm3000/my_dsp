@@ -15,25 +15,20 @@
 #include "arc.h"
 #include "anglePred.h"
 
-extern int middle_zhi_controlFlag;
 extern double Beta, Beta_last;
 extern double W_BD;
 extern double Alpha, Alpha_cos, Alpha_sin;
 extern double F_A, T;
 extern double delta_P, delta_P0, dd_P;
-extern int valve_pwm_middle_zhi, valve_pwm_middle_bei, valve_pwm_push;
 
 extern float pelvic_acc_z[N], t[N];
 extern float rshank_euler_y[N], rthigh_euler_y[N];
 
 extern float velo_pred[N], angle_pred[N];
-extern int walk_cycle, walk_index_pred;
+extern int walk_cycle;
+extern int point_num, predict_flag;
 //extern float dt;
 
-int last_walk_cycle, walk_index;
-
-// 发送数据标志位
-int DATA_SEND = 1;
 
 // ADC采样相关取平均值数组
 static Uint32 sum1 = 0, sum2 = 0,sum3 = 0, sum4 = 0, sum5 = 0, sum6 = 0, sum7 = 0;
@@ -51,9 +46,6 @@ static int counter_P = 0;
 // 踝关节角度平均值
 static double angle_ave[5] = {0.0};
 
-// 角度预测相关
-int point_num = 0, predict_flag = 0;
-
 static float a_pel[3], ang_pel[3];
 static float ang_rsh[3];
 static float ang_rth[3];
@@ -61,9 +53,25 @@ static float a_rfo[3], ang_rfo[3];
 static float ang_lsh[3];
 static float ang_lth[3];
 static float a_lfo[3], ang_lfo[3];
-static int walk_state = 0, begin_flag = 0, index = 0;
 static float ang_rsh_off = 0.0, ang_rth_off = 0.0;
-float interval = 0.001;
+static float interval = 0.001;
+
+// 被动背曲的起始索引
+static int index_bei = 0, start_bei = 0;
+
+static unsigned char chrTemp[30];
+
+// 发送数据标志位
+int DATA_SEND = 1;
+//int predict_flag = 0;
+//// 角度预测相关
+//int point_num = 0;
+
+// 残肢腿使用的预测数据
+static int walk_state = 0, begin_flag = 0, index = 0;
+int last_walk_cycle, walk_index;
+float velo_pred_buf[N], angle_pred_buf[N];
+int point_num_buf;
 
 //定时器0初始化函数
 //Freq：CPU时钟频率（150MHz）
@@ -135,12 +143,12 @@ void TIM1_Init(float Freq, float Period)
 
 }
 
+static Uint16 buf[64] = {};
 interrupt void TIM0_IRQn(void)
 {
     int i;
     double temp;
     float T_pred;
-    Uint16 buf[40] = {};
     CpuTimer0.InterruptCount++;
     AdcRegs.ADCTRL2.all = 0x2000;   // 软件向SEQ1位写1开启转换触发
     // ADC电压转换，10次采样取平均值
@@ -228,25 +236,31 @@ interrupt void TIM0_IRQn(void)
         else if(proState == MIDDLE_BEI_STATE) {
             // 使用自适应鲁棒控制算法
             //
-            if(walk_cycle == 0) {       // 第一个步态可能出现无预测角度的情况，控制律给默认值
-                valve_pwm_middle_bei = MAX_VALVE_3 / 2;
+            if(walk_cycle < 2) {       // 第一个步态可能出现无预测角度的情况，控制律给默认值
+                valve_pwm_middle_bei = MAX_VALVE_3 - 350;
             }
             else {
-                if(walk_cycle != last_walk_cycle) {
-                    walk_index = 0;
+                float angle_in, velo_in;
+                if(start_bei % 2 == 0) {
+                    angle_in = angle_pred_buf[index_bei];
+                    velo_in = velo_pred_buf[index_bei];
                 }
-                T_pred = arc_controller(angle, angle_pred[walk_index], velo_pred[walk_index], interval);
+                else {
+                    if(index_bei + 1 < point_num_buf) index_bei++;
+                    angle_in = (angle_pred_buf[index_bei - 1] + angle_pred_buf[index_bei]) / 2;
+                    velo_in = (velo_pred_buf[index_bei - 1] + velo_pred_buf[index_bei]) / 2;        
+                }
+                T_pred = arc_controller(angle, angle_in, velo_in, interval);
                 // 求解delta_P
+                Alpha = acos(Alpha_cos);
+                F_A = T_pred / L_BD * cos((90.0 - Beta) / 180.0 * PI - Alpha) * Alpha_sin;
                 delta_P = (F_A) / A_p / 1000000;
                 dd_P = delta_P0 - delta_P;
                 valve_pwm_middle_bei = valve_pwm_middle_bei + (int)(Kp * dd_P);
-                last_walk_cycle = walk_cycle;
-                walk_index++;
-                if(walk_index > walk_index_pred) walk_index = walk_index_pred;
+                start_bei++;
             }
-
-            if(valve_pwm_middle_bei < MIN_SPEED) {
-                valve_pwm_middle_bei = MIN_SPEED;
+            if(valve_pwm_middle_bei < MIN_VALVE_3) {
+                valve_pwm_middle_bei = MIN_VALVE_3;
             }
             else if(valve_pwm_middle_bei > MAX_VALVE_3) {
                 valve_pwm_middle_bei = MAX_VALVE_3;
@@ -255,14 +269,37 @@ interrupt void TIM0_IRQn(void)
         else if(proState == PUSH_STATE)
         {
             valve_pwm_push = MAX_SPEED;
+
+        }
+        else if(proState == PULL_STATE) {
+            if(walk_cycle != last_walk_cycle) {
+                float angle_min = 10000.0;
+                walk_index = 0;
+                point_num_buf = point_num;
+                for(i = 0; i < point_num_buf; i++) {
+                    angle_pred_buf[i] = angle_pred[i];
+                    velo_pred_buf[i] = velo_pred[i];
+                    if(i < 60 && angle_pred_buf[i] < angle_min){
+                        angle_min = angle_pred_buf[i];
+                        index_bei = i;
+                        start_bei = 0;
+                    }
+                }
+            }
+            last_walk_cycle = walk_cycle;
         }
     }
 
     // 发送数据至上位机
-    if(CpuTimer0.InterruptCount % 2 == 0 && DATA_SEND == 1)
+//    if(CpuTimer0.InterruptCount % 2 == 0 && DATA_SEND == 1)
+    if(CpuTimer0.InterruptCount % 2 == 0)
     {
-        Uint16 dataLen = sprintf(buf, "%.2f %.2f %.2f %.2f %.2f %.2f %.2f %d %d %d %d %d\r\n", angle, press1, press2, press3,
-                                P_foot1, P_foot2, P_foot3, proState, motorState, valve_pwm_middle_zhi, valve_pwm_middle_bei, valve_pwm_push);
+        int tmp_pwm = 0;
+        if(proState == MIDDLE_ZHI_STATE) tmp_pwm = valve_pwm_middle_zhi;
+        else if(proState == MIDDLE_BEI_STATE) tmp_pwm = valve_pwm_middle_bei;
+        else if(proState == PUSH_STATE) tmp_pwm = valve_pwm_push;
+        Uint16 dataLen = sprintf(buf, "%.2f %.2f %.2f %.2f %.2f %.2f %.2f %d %d %d %d\r\n", angle, press1, press2, press3,
+                                P_foot1, P_foot2, P_foot3, proState, motorState, tmp_pwm, CONTROL_FLAG);
         usartb_sendData(buf, dataLen);
     }
 
@@ -279,8 +316,9 @@ interrupt void TIM0_IRQn(void)
 
 interrupt void TIM1_IRQn(void)
 {
-    unsigned char chrTemp[30];
     float angle_tmp;
+//    Uint8 data_buf[10] = {};
+//    Uint16 data_Len = 0;
     // 轮训接收各个IMU的数据
     // 7个IMU，但是为了整体周期性，按10个一次轮训
     scib_msg("1 ");
@@ -383,6 +421,7 @@ interrupt void TIM1_IRQn(void)
     // 默认每次都能正常获取到IMU数据
     if(predict_flag == 0)
     {
+        predict_flag = 0;
         if(walk_state == 0) {
             // 起始静置200个周期后，得到一些角度的偏移量
             begin_flag++;
@@ -421,6 +460,10 @@ interrupt void TIM1_IRQn(void)
     scib_int(walk_state);
     scib_msg(" ");
     scib_int(index);
+    scib_msg(" ");
+    scib_int(point_num);
+    scib_msg(" ");
+    scib_int(predict_flag);
     scib_msg("\r\n");
 
 }
@@ -459,15 +502,15 @@ void TIM2_Init(float Freq, float Period)
 
 }
 
-int tim2_cnt = 0;
+// int tim2_cnt = 0;
 interrupt void TIM2_IRQn(void)
 {
     // 暂时用于测试保留下来
-    tim2_cnt++;
-    if(tim2_cnt >= 1000) {
-        tim2_cnt = 0;
-        scib_msg("m\r\n");
-    }
+    // tim2_cnt++;
+    // if(tim2_cnt >= 1000) {
+    //     tim2_cnt = 0;
+    //     scib_msg("m\r\n");
+    // }
     // 假肢主要控制逻辑
     if(CONTROL_FLAG == NO_CONTROL_OUT)
     {
@@ -499,7 +542,7 @@ interrupt void TIM2_IRQn(void)
         }
         else if(proState == PULL_STATE)
         {
-            if(angle >= ANGLE_PULL_MIDDLE)
+            if(angle >= ANGLE_PULL_MIDDLE || (angle >= -3.5 && P_foot3 >= 0.5))
             {
                 proState = MIDDLE_ZHI_STATE;
             }
@@ -519,7 +562,7 @@ interrupt void TIM2_IRQn(void)
             case PULL_STATE:
                 PULL();
                 valve_pwm_middle_zhi = MIN_SPEED;
-                valve_pwm_middle_bei = MIN_SPEED;
+                valve_pwm_middle_bei = MAX_VALVE_3 / 2;
                 valve_pwm_push = MAX_SPEED;
                 middle_zhi_controlFlag = 0;
                 break;

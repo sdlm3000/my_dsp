@@ -248,3 +248,17 @@ void MIDDLE_bei()
 <img src="images/dsp调试记录/image-20221014215208449.png" alt="image-20221014215208449" style="zoom:80%;" />
 
 ​	替换后，感觉效果也不是很好呀。
+
+
+
+## 2022.10.16
+
+​	prothesis_221012_error.zip中的代码，当栈的深度为300时，里面的walk_state、point_num和predict_flag等一些量会被莫名的修改，比如predict_flag只可能是0或者1，但是实际打印出来可能变成10,52,56等。一般在一个周期结束，main函数开始解算，解算到一半的时候，被打断进入tim1中断，后值就会被莫名修改了，比较玄学。
+
+​	大概率是内存的问题吧。
+
+
+
+## 2022.11.08
+
+​	注意现在用IMU传感器系统跑的代码在C:\ADATA\all_work\my_dsps\demo中，单独开了一个工作区
